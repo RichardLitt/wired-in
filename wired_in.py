@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#!/Library/Frameworks/Python.framework/Versions/Current/bin/python
 # -*- coding: utf-8 -*-
 """
 This is a code for managing my time in a simple and orderly fashion.
@@ -14,8 +14,8 @@ import random
 import math
 import textwrap
 
-output_file_name = "oxygen_log.csv"
-tasks_file = "tasks.csv"
+output_file_name = "/Users/richardlittauer/Github/wired-in/oxygen_log.csv"
+tasks_file = "/Users/richardlittauer/Github/wired-in/tasks.csv"
 
 
 work_tasks = ["hiwi", "FLST", "PSR", "syntax", "CL4LRL", "stats"]
