@@ -160,6 +160,68 @@ def number_string(x):
     if (match_o_time != None):
         return str(x)
 
+#NLP for manual date input
+def date_string(x):
+    today = datetime.datetime.now()
+    # You should put in a converter here to convert from 0000/00/00 to
+    # 0000-00-00
+    if x == "today":
+        date = str(today)[:10]
+    if x == "tomorrow":
+        date = str(today)[:8] + str(int(str(today)[8:10])+1)
+        bad_dates = ["29", "30", "31"]
+        if date[8:10] in bad_dates:
+            print "Check the month - there may be no tomorrow."
+    pass_through = ['today', 'tomorrow']
+    if x not in pass_through:
+        #X must be YYYY-MM-DD
+        pattern = re.compile("\d+\-\d+\-\d+")
+        match_o = re.match(pattern, x)
+        if (match_o != None):
+            print x
+        if (match_o == None):
+            x = x.split(' ')
+            months = ['no month', 'January', 'February', 'March', 'April', \
+                    'May',  'June', 'July', 'August', 'September', 'October',\
+                    'November', 'December']
+            if x[0] in months:
+                month = months.index(x[0])
+                if month < 10:
+                    month = '0' + str(month)
+            pattern = re.compile("\d\d")
+            match_p = re.match(pattern, x[1])
+            if (match_p != None):
+                day = x[1][:2]
+            if (match_p == None):
+                pattern = re.compile("\d")
+                match_n = re.match(pattern, x[1][:1])
+                if (match_n != None):
+                    day = '0' + x[1][:1]
+                if (match_n == None):
+                    ordinal = ['zeroth', 'first', 'second', 'third', 'fourth', \
+                            'fifth', 'sixth',\
+                            'seventh','eighth', 'nineth', 'tenth', 'eleventh', \
+                            'twelfth', 'thirteenth','fourteenth','sixteenth',\
+                            'seventeenth','eightteenth','nineteenth','twentieth',
+                            'twentyfirst','twentyfirst','twentysecond',\
+                            'twentythird','twentyfourth','twentyfifth',\
+                            'twentysixth','twentyseventh','twentyeighth'\
+                            ,'twentyninth','thirtieth','thirtyfirst']
+                    day = x[1]
+                    if day not in ordinal:
+                        print 'ERROR'
+                    if day in ordinal:
+                        day = ordinal.index(day)
+                        if day < int(10):
+                            day = '0' + str(day)
+        year = '2012'
+        date = [year, month, str(day)]
+        date = '-'.join(date)
+    return date
+
+
+
+
 
 def random_navi_animal():
     animal = ["'angts\xcck", "eltungawng", "ngawng", "fpxafaw", "ikran",
@@ -1218,17 +1280,7 @@ def task_write():
 
 
     date = raw_input('date due: ')
-    today = datetime.datetime.now()
-    # You should put in a converter here to convert from 0000/00/00 to
-    # 0000-00-00
-
-    if date == "today":
-        date = str(today)[:10]
-    if date == "tomorrow":
-        date = str(today)[:8] + str(int(str(today)[8:10])+1)
-        bad_dates = ["29", "30", "31"]
-        if date[8:10] in bad_dates:
-            print "Check the month - there may be no tomorrow."
+    date = date_string(date)
 
     weight = raw_input('weight: ')
 
@@ -1306,7 +1358,7 @@ def todo():
 
 if __name__ == "__main__":
     if (sys.argv[1] == "test"):
-        test()
+        date_string(sys.argv[2])
     #Today is now dependant in some aspects \
             #on tasks.csv
     if (sys.argv[1] == "today"):
