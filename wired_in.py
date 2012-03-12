@@ -14,7 +14,7 @@ import random
 import math
 import textwrap
 
-output_file_name = "/Users/richardlittauer/Github/wired-in/oxygen_log.csv"
+output_file_name = "/Users/richardlittauer/Github/wired-in/log.csv"
 tasks_file = "/Users/richardlittauer/Github/wired-in/tasks.csv"
 
 
@@ -42,12 +42,18 @@ def help():
     print " projects <project>"
     print " random [today]"
     print " task [today/all]"
+    print " edit <file>"
     print
     print "-----------------------------------------------"
     print
 
 
-
+#The following are for editing files
+def edit(x):
+    path = '/Users/richardlittauer/Github/wired-in/'
+    command = 'vi ' + path + x
+    os.system(command)
+    print 'Now executing: ' + command
 
 def print_time_labels(input_time):
     if len(input_time) == 16:
@@ -1357,6 +1363,8 @@ def todo():
 
 
 if __name__ == "__main__":
+    if (sys.argv[1] == "edit"):
+        edit(sys.argv[2])
     if (sys.argv[1] == "test"):
         date_string(sys.argv[2])
     #Today is now dependant in some aspects \
