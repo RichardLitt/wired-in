@@ -14,7 +14,7 @@ import random
 import math
 import textwrap
 
-output_file_name = "/Users/richardlittauer/Github/wired-in/log.csv"
+output_file_name = "/Users/richardlittauer/Github/wired-in/oxygen.csv"
 tasks_file = "/Users/richardlittauer/Github/wired-in/tasks.csv"
 
 
@@ -48,10 +48,16 @@ def help():
     print
 
 
-#The following are for editing files
+#The following is for editing files
 def edit(x):
+    if x == 'tasks':
+        x = 'tasks.csv'
+    if x == 'log':
+        x =  'nnoxygen.csv'
+    if x == 'code':
+        x = 'wired_in.py'
     path = '/Users/richardlittauer/Github/wired-in/'
-    command = 'vi ' + path + x
+    command = sys.argv[1] + ' ' + path + x
     os.system(command)
     print 'Now executing: ' + command
 
@@ -169,22 +175,31 @@ def number_string(x):
 #NLP for manual date input
 def date_string(x):
     today = datetime.datetime.now()
-    # You should put in a converter here to convert from 0000/00/00 to
-    # 0000-00-00
+
+    #Converts YYYY/MM/DD to YYYY-MM-DD
+    if len(x.split('/')) == 3:
+        x = x.split('/')
+        x = '-'.join(x)
+
+    #If the string is just today
     if x == "today":
         date = str(today)[:10]
+    
+    # If it is tomorrow
     if x == "tomorrow":
         date = str(today)[:8] + str(int(str(today)[8:10])+1)
         bad_dates = ["29", "30", "31"]
         if date[8:10] in bad_dates:
             print "Check the month - there may be no tomorrow."
     pass_through = ['today', 'tomorrow']
+
+    # If it is neither
     if x not in pass_through:
         #X must be YYYY-MM-DD
         pattern = re.compile("\d+\-\d+\-\d+")
         match_o = re.match(pattern, x)
         if (match_o != None):
-            print x
+            date = x
         if (match_o == None):
             x = x.split(' ')
             months = ['no month', 'January', 'February', 'March', 'April', \
@@ -220,9 +235,9 @@ def date_string(x):
                         day = ordinal.index(day)
                         if day < int(10):
                             day = '0' + str(day)
-        year = '2012'
-        date = [year, month, str(day)]
-        date = '-'.join(date)
+            year = '2012'
+            date = [year, month, str(day)]
+            date = '-'.join(date)
     return date
 
 
@@ -1363,7 +1378,9 @@ def todo():
 
 
 if __name__ == "__main__":
-    if (sys.argv[1] == "edit"):
+    if (sys.argv[1] == "mvim"):
+        edit(sys.argv[2])
+    if (sys.argv[1] == "vi"):
         edit(sys.argv[2])
     if (sys.argv[1] == "test"):
         date_string(sys.argv[2])
