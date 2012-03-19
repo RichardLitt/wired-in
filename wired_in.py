@@ -4,6 +4,7 @@
 This is a code for managing my time in a simple and orderly fashion.
 Richard Littauer
 """
+
 import os
 import time
 import datetime
@@ -31,6 +32,7 @@ def help():
     print " status"
     print " cease"
     print " topics"
+    print " PID"
     print
     print " search <project> [print]"
     print " today [-][project]/[left]/[tasks] [all]"
@@ -53,7 +55,7 @@ def edit(x):
     if x == 'tasks':
         x = 'tasks.csv'
     if x == 'log':
-        x =  'nnoxygen.csv'
+        x =  'oxygen.csv'
     if x == 'code':
         x = 'wired_in.py'
     path = '/Users/richardlittauer/Github/wired-in/'
@@ -116,9 +118,7 @@ def time_add(x, y):
     return str(hours) + ":" + str(minutes) + ":" + str(seconds)
 
 def day_index(x):
-    days = 0
-    days += int(x[8:10])
-    months = [[], \
+    months = [['nostring',0], \
     ['january', 0], \
     ['february', 31], \
     ['march', 59], \
@@ -131,8 +131,37 @@ def day_index(x):
     ['october', 273], \
     ['november', 304], \
     ['december', 334]]
-    days += months[int(x[5:7])][1]
-    return str(days)
+
+    # This will find the amount of days from zero given a date
+    if len(str(x)) > 4:
+        days = 0
+        days += int(x[8:10])
+        days += months[int(x[5:7])][1]
+        return str(days)
+
+    #Given the amount of days, this will reverse into a date.
+    if len(str(x)) < 4:
+        date = []
+        #This is going to mess up over the new year
+        now = datetime.datetime.now()
+        date.append(str(now)[0:4])
+        # This sould be able to account for strings over the new year, staring
+        # in november.
+        if int(day_index(str(now)[0:10])) > 304:
+            if int(x) < 200:
+                date[0] = date.append(int(str(now)[0:4])+1)
+        for month in range(len(months)):
+            if int(x) >= months[month][1]:
+                month_store = month
+                date_store = int(x)-months[month][1]
+                if date_store < 10:
+                    date_store = '0' + str(date_store)
+                if month_store < 10:
+                    month_store = '0' + str(month)
+        date.append(str(month_store))
+        date.append(str(date_store))
+        date = '-'.join(date)
+        return date
 
 #Natural language processor for numbers
 #input whatever, returns string
@@ -205,6 +234,7 @@ def date_string(x):
             months = ['no month', 'January', 'February', 'March', 'April', \
                     'May',  'June', 'July', 'August', 'September', 'October',\
                     'November', 'December']
+            ## Ignore case needs to be done by regex here. 
             if x[0] in months:
                 month = months.index(x[0])
                 if month < 10:
@@ -252,8 +282,33 @@ def random_navi_animal():
     return str(animal[random.randrange(len(animal)-1)])
 
 
+def PID(PID):
+    f = open(tasks_file, 'r+')
+    lineList = f.readlines()
+    for line in lineList:
+        line = line.split(', ')
+        line[7] = line[7].replace('\n', '')
+        if line[7] == PID:
+            print
+            print 'Information for PID %s:' % PID
+            print 'Project: ' + line[0]
+            print 'Task: ' + line[1]
+            print 'Expected Time: ' + print_time_labels(line[2])
+            print 'Due: ' + line[3]
+            print 'Weight: ' + line[4]
+            print 'Days to do: ' + line[5]
+            print 'Type: ' + line[6]
+            print
 
-def test():
+def task_division(line):
+    line  = line.split(', ')
+    'life, Memorize the articles of the constitution, \
+    03:00:00, 2012-03-21, 1, 1, hard, 28'
+    time_for_task = line[2]
+    date_due = line[3]
+    days_to_do = line[5]
+    task_type = line[6]
+    PID = line[7]
     ##This is currently testing the ability to divide up time in different
     ##ways. What would be good is an output format that isn't a day string.
     ##Also, to output line by line, but recall original dates. 
@@ -262,40 +317,99 @@ def test():
             'soft', #Days before, divides time.
             'cont', #Repeats from start date for x days.
             'x'] #Doesn't repeat or show unless asked.
-    f = open(tasks_file, 'r+')
-    lineList = f.readlines()
-    for line in lineList:
-        line = line.split(', ')
-        task_type = line[6].replace('\n', '')
-        day = line[3]
 
-        if task_type not in task_types:
-            print "Something is wrong with your formatting tasks."
+    if task_type not in task_types:
+        print "Something is wrong with your formatting tasks."
+        print "Look at PID: " + PID
 
-        if task_type == 'dead':
-            print line
+    if task_type == 'dead':
+        line = ', '.join(line)
+        return line
 
-        if task_type == 'hard':
-            start_appearing = int(day_index(day)) - int(line[5])
-            print line[2], day_index(day), line[5], task_type
-            #Not sure about this one. Not printing, for one.
+    if task_type == 'hard':
+        # Currently, the way it is set up is on hard - shows the full time, days
+        # before. 
+        line = ', '.join(line)
+        return line
+        #start_appearing = int(day_index(date_due)) - int(days_to_do)
+        #date_due = day_index(start_appearing)
 
-        if task_type == 'soft':
-            start_appearing = int(day_index(day)) - int(line[5])
-            time_for_task = int(line[2][0:2])*60 + int(line[2][3:5])
-            time_for_task = time_for_task / int(line[5])
-            print time_for_task
-            print line[2], day_index(day), line[5], task_type
-            #ibid
+    if task_type == 'soft':
+        
+        start_appearing = int(day_index(date_due)) - int(days_to_do)
+        time_for_task = int(line[2][0:2])*60 + int(line[2][3:5])
 
-        if task_type == 'cont':
-            today = str(datetime.datetime.now())[:10]
-            if day_index(today) >= day_index(day):
-                    print "strange"
-            print line[2], day_index(day), line[5], task_type
+        # This checks if there has already been work done. 
+        f = open(output_file_name, 'r+')
+        lineList = f.readlines()
+        for logline in lineList:
+            logline = logline.split(', ')
+            if len(logline) == int(7):
+                logPID = logline[6].replace('\n','')
+                if logPID == PID:
+                    time_done = logline[3].split(':')
+                    time_taken_already = int(time_done[0])*60\
+                            + int(time_done[1])
+                    time_for_task = time_for_task - time_taken_already
 
-        if task_type == 'x':
-            print line[2], line[5], task_type
+        #Splits according to days left
+        today = str(datetime.datetime.now())[0:10]
+        days_left = int(days_to_do)
+        if start_appearing <= day_index(today):
+            days_left = int(day_index(date_due))-int(day_index(today))+1
+        time_for_task = (time_for_task / days_left) \
+                + time_for_task%days_left
+
+        tft = []
+        tft_hour = time_for_task / 60
+        if tft_hour < 10:
+            tft_hour = '0' + str(tft_hour)
+        tft_hour = str(tft_hour)
+        tft.append(tft_hour)
+        tft_minute = time_for_task % 60
+        if tft_minute < 10:
+            tft_minute = '0' + str(tft_minute)
+        tft_minute = str(tft_minute)
+        tft.append(tft_minute)
+        tft.append('00')
+        tft = ':'.join(tft)
+        line[2] = tft
+        line = ', '.join(line)
+        print line
+
+    if task_type == 'cont':
+        time_for_task = int(line[2][0:2])*60 + int(line[2][3:5])
+        f = open(output_file_name, 'r+')
+        lineList = f.readlines()
+        for logline in lineList:
+            logline = logline.split(', ')
+            if len(logline) == int(7):
+                logPID = logline[6].replace('\n','')
+                if logPID == PID:
+                    time_done = logline[3].split(':')
+                    time_taken_already = int(time_done[0])*60\
+                            + int(time_done[1])
+                    time_for_task = time_for_task - time_taken_already
+        if time_for_task <= line[2]:
+            today =datetime.datetime.now()
+            line[3] = str(today)[:8] + str(int(str(today)[8:10])+1)
+            print line[3]
+        if time_for_task > line[2]:
+            line[3] = str(datetime.datetime.now())[:10]
+        line = ', '.join(line)
+        return line
+
+    if task_type == 'x':
+        today =datetime.datetime.now()
+        line[3] = str(today)[:8] + str(int(str(today)[8:10])+1)
+        #Going to want to fix this so that it goes over month boundaries. 
+        
+        line = ', '.join(line)
+        return line
+    
+    if task_type == 'filler':
+        line = ', '.join(line)
+        return line
 
 
 
@@ -540,7 +654,7 @@ def today():
     #Will be useful when you integrate PIDs.
     oxygenList = lineList
     time_now = datetime.now()
-    print 
+    print
     total_time = "00:00:00"
     total_time_alt = "00:00:00"
     logged_time = "00:00:00"
@@ -598,19 +712,23 @@ def today():
                 if sys.argv[2][0] != "-":
                     if (line[1] == sys.argv[2]):
                         tt = datetime.strptime(worked, FMT)
-                        total_time_alt = datetime.strptime(str(total_time_alt), FMT) + timedelta(hours=tt.hour,minutes=tt.minute,seconds=tt.second)
+                        total_time_alt = datetime.strptime\
+                                (str(total_time_alt), FMT)\
+                                + timedelta(hours=tt.hour,minutes\
+                                =tt.minute,seconds=tt.second)
                         total_time_alt = str(total_time_alt)[11:]
                         specific_job = line[1]
                         specific_job_catch = "only"
             except: specific_job = "essential work"
-    
+
     productivity_measure =(float(total_time[:2])*60+ \
             float(total_time[3:5]))/500*100
-#    print
-#    print "You have worked a total of %s today." % print_time_labels(total_time)
-#    if total_time != logged_time:
-#        print "(But you've logged %s.)" % print_time_labels(logged_time)
-#    print "So far, you have been %.2f%% productive." % productivity_measure
+
+    print
+    print "You have worked a total of %s today." % print_time_labels(total_time)
+    if total_time != logged_time:
+        print "(But you've logged %s.)" % print_time_labels(logged_time)
+    print "So far, you have been %.2f%% productive." % productivity_measure
 
     try: 
         if (sys.argv[2] == "left"):
@@ -625,7 +743,6 @@ def today():
     if specific_job_catch == "only":
         time_labels = print_time_labels(total_time_alt)
         print "Of that, you did %s for %s." % (specific_job, time_labels)
- #   print 
 
     #This loads up the tasks bit if you want to see what you need to do today.
     try:
@@ -689,9 +806,7 @@ def today():
                 if print_time_labels(line[2]) == "0 minutes":
                     print " %s %s : %s." % (PID, line[0], line[1])
             print
-    except: jesus = "dead"
-    print 
-'''
+
             #Prints out the rest if you want to see them. 
             try:
                 if sys.argv[3] == "all":
@@ -715,14 +830,14 @@ def today():
             except: jesus = "is he dead?"
 
             #Prints the total time left given the tasks to do.
-            print "You have %s to go." % print_time_labels(time_left_today)
+            print "You have roughly %s of work to do." % print_time_labels(time_left_today)
             if time_also_left_today != "00:00:00":
-                print "You have %s to go, as well." % \
+                print "You also have an extra %s of work after that." % \
                 print_time_labels(time_also_left_today)
 
     except: jesus = "dead"
     print 
-'''
+
 
 def vacation():
     from datetime import datetime
@@ -739,6 +854,7 @@ def vacation():
     specific_job_catch = "empty"
 
     for line in lineList:
+        line = task_division(line)
         line = line.replace('\n', '').split(', ')
         if str(time_now)[:10] == line[0][:10]:
 
@@ -1065,7 +1181,7 @@ def fence():
     lineList = f.readlines()
     last_line = lineList[-1].split(', ')
     ## Make sure that there isn't any current job
-    if len(last_line) != 6:
+    if len(last_line) == 2:
         if (sys.argv[2] == 'manual'):
             f.write("\n")
             last_line = "012345"
@@ -1079,22 +1195,26 @@ def fence():
             print "      *Last job unfinished, error.*"
             print "      *****************************"
             print
-    if len(last_line) == 6:
+    if len(last_line) >= 6:
         print 
         print "-------------------------------Fence------------------------------------"
 
         project = raw_input(' project: ')
-        first_time = raw_input(' from (HH:MM): ')
+        first_time = raw_input(' from: ')
         if len(first_time) != 5:
             if first_time != "last":
-                print "You're an idiot."
+                print "Military time please."
                 first_time = raw_input(' from (HH:MM): ')
-        second_time = raw_input(' to (HH:MM): ')
+        second_time = raw_input(' to: ')
         if second_time == "now":
             now = datetime.now()
             second_time = str(now)[11:16]
         print ' Comment can be -x or -c.'
         comment = raw_input(' comment: ')
+        PID = raw_input(' PID: - ')
+        if PID == 'list':
+            os.system('wyr today tasks all')
+            PID = raw_input(' PID: - ')
         print
 
         ## Find the first time. 
@@ -1160,6 +1280,8 @@ def fence():
         f.write(total_time + ", ")
         f.write(project + ", ")
         f.write(comment.replace("\"", "'"))
+        if len(PID) != 0:
+            f.write(", " + PID)
         f.write("\n")
         f.close()
 
@@ -1382,8 +1504,10 @@ if __name__ == "__main__":
         edit(sys.argv[2])
     if (sys.argv[1] == "vi"):
         edit(sys.argv[2])
+    #if (sys.argv[1] == "taskdiv"):
+    #    task_division(sys.argv[2])
     if (sys.argv[1] == "test"):
-        date_string(sys.argv[2])
+        day_index(sys.argv[2])
     #Today is now dependant in some aspects \
             #on tasks.csv
     if (sys.argv[1] == "today"):
@@ -1421,6 +1545,8 @@ if __name__ == "__main__":
         task_write()
     if (sys.argv[1] == "task"):
         todo()
+    if (sys.argv[1] == "PID"):
+        PID(sys.argv[2])
 
 
 '''
