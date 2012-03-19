@@ -316,7 +316,8 @@ def task_division(line):
             'hard', #Days before, doesn't divide.
             'soft', #Days before, divides time.
             'cont', #Repeats from start date for x days.
-            'x'] #Doesn't repeat or show unless asked.
+            'x', #Doesn't repeat or show unless asked
+            'filler'] #Shouldn't appear, but does for now.
 
     if task_type not in task_types:
         print "Something is wrong with your formatting tasks."
@@ -342,6 +343,9 @@ def task_division(line):
         # This checks if there has already been work done. 
         f = open(output_file_name, 'r+')
         lineList = f.readlines()
+
+        # This checks the logs based on PIDs to see if any work has been 
+        # done yet.
         for logline in lineList:
             logline = logline.split(', ')
             if len(logline) == int(7):
@@ -352,13 +356,18 @@ def task_division(line):
                             + int(time_done[1])
                     time_for_task = time_for_task - time_taken_already
 
-        #Splits according to days left
+        # Splits according to days left
         today = str(datetime.datetime.now())[0:10]
         days_left = int(days_to_do)
-        if start_appearing <= day_index(today):
+        
+        # If it already should have been appearing
+        if start_appearing <= int(day_index(today)):
             days_left = int(day_index(date_due))-int(day_index(today))+1
+            if days_left <= 0:
+                days_left = 1
         time_for_task = (time_for_task / days_left) \
                 + time_for_task%days_left
+
 
         tft = []
         tft_hour = time_for_task / 60
@@ -375,7 +384,7 @@ def task_division(line):
         tft = ':'.join(tft)
         line[2] = tft
         line = ', '.join(line)
-        print line
+        return line
 
     if task_type == 'cont':
         time_for_task = int(line[2][0:2])*60 + int(line[2][3:5])
@@ -393,7 +402,6 @@ def task_division(line):
         if time_for_task <= line[2]:
             today =datetime.datetime.now()
             line[3] = str(today)[:8] + str(int(str(today)[8:10])+1)
-            print line[3]
         if time_for_task > line[2]:
             line[3] = str(datetime.datetime.now())[:10]
         line = ', '.join(line)
@@ -408,6 +416,7 @@ def task_division(line):
         return line
     
     if task_type == 'filler':
+        line[0] = '!' + line[0] 
         line = ', '.join(line)
         return line
 
@@ -760,6 +769,7 @@ def today():
 
             #Adds the tasks to do to a list.
             for line in lineList:
+                line = task_division(line)
                 line = line.split(', ')
                 today = datetime.now()
 
@@ -1427,19 +1437,19 @@ def task_write():
 
     weight = raw_input('weight: ')
 
-    noose = "filler"
 
     if (date != 'x'):
         if date != str(today)[:10]:
 
             days_before = raw_input('days to work on: ')
 
-            #noose = raw_input('hard or soft: ')
-
     if (date == 'x') or (date == str(today)[:10]):
 
         days_before = '1'
-        #noose = 'x'
+
+    print
+    print '(Task Types: hard  soft  cont  dead)'
+    task_type = raw_input('type: ')
 
     PID = 0
     for line in lineList:
@@ -1449,7 +1459,7 @@ def task_write():
     print
     f.write(task + ', ' + job + ', ' + time_exp + ', ' + date \
             + ', ' + weight + ', ' + days_before + \
-            ', ' + noose + ', ' + str(PID) + '\n')
+            ', ' + task_type + ', ' + str(PID) + '\n')
     f.close()
 
 def todo():
@@ -1499,17 +1509,15 @@ def todo():
     print
 
 
+#Today is now dependant in some aspects \
+            #on tasks.csv
 if __name__ == "__main__":
     if (sys.argv[1] == "mvim"):
         edit(sys.argv[2])
     if (sys.argv[1] == "vi"):
         edit(sys.argv[2])
-    #if (sys.argv[1] == "taskdiv"):
-    #    task_division(sys.argv[2])
     if (sys.argv[1] == "test"):
-        day_index(sys.argv[2])
-    #Today is now dependant in some aspects \
-            #on tasks.csv
+        task_division(sys.argv[2])
     if (sys.argv[1] == "today"):
         today()
     if (sys.argv[1] == "vacation"):
