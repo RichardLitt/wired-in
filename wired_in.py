@@ -17,6 +17,7 @@ import textwrap
 
 output_file_name = "/Users/richardlittauer/Github/wired-in/oxygen.csv"
 tasks_file = "/Users/richardlittauer/Github/wired-in/tasks.csv"
+shopping_list = "/Users/richardlittauer/Github/wired-in/shopping_list.csv"
 
 
 work_tasks = ["hiwi", "FLST", "PSR", "syntax", "CL4LRL", "stats"]
@@ -58,6 +59,8 @@ def edit(x):
         x =  'oxygen.csv'
     if x == 'code':
         x = 'wired_in.py'
+    if x == 'list':
+        x = 'shopping_list.csv'
     path = '/Users/richardlittauer/Github/wired-in/'
     command = sys.argv[1] + ' ' + path + x
     os.system(command)
@@ -205,12 +208,16 @@ def number_string(x):
 def date_string(x):
     today = datetime.datetime.now()
 
-    #Converts YYYY/MM/DD to YYYY-MM-DD
+    # Converts YYYY/MM/DD to YYYY-MM-DD
     if len(x.split('/')) == 3:
         x = x.split('/')
         x = '-'.join(x)
 
-    #If the string is just today
+    # This is for non-dates. 
+    if x == 'x':
+        date = 'x'
+
+    # If the string is just today
     if x == "today":
         date = str(today)[:10]
     
@@ -220,7 +227,7 @@ def date_string(x):
         bad_dates = ["29", "30", "31"]
         if date[8:10] in bad_dates:
             print "Check the month - there may be no tomorrow."
-    pass_through = ['today', 'tomorrow']
+    pass_through = ['today', 'tomorrow', 'x']
 
     # If it is neither
     if x not in pass_through:
@@ -344,12 +351,13 @@ def task_division(line):
         f = open(output_file_name, 'r+')
         lineList = f.readlines()
 
+
         # This checks the logs based on PIDs to see if any work has been 
         # done yet.
         for logline in lineList:
             logline = logline.split(', ')
             if len(logline) == int(7):
-                logPID = logline[6].replace('\n','')
+                logPID = logline[6]
                 if logPID == PID:
                     time_done = logline[3].split(':')
                     time_taken_already = int(time_done[0])*60\
@@ -359,7 +367,7 @@ def task_division(line):
         # Splits according to days left
         today = str(datetime.datetime.now())[0:10]
         days_left = int(days_to_do)
-        
+
         # If it already should have been appearing
         if start_appearing <= int(day_index(today)):
             days_left = int(day_index(date_due))-int(day_index(today))+1
@@ -368,7 +376,9 @@ def task_division(line):
         time_for_task = (time_for_task / days_left) \
                 + time_for_task%days_left
 
+        line[3] = today
 
+        # This converts 183 into 03:03:00
         tft = []
         tft_hour = time_for_task / 60
         if tft_hour < 10:
@@ -384,6 +394,7 @@ def task_division(line):
         tft = ':'.join(tft)
         line[2] = tft
         line = ', '.join(line)
+        #print line.replace('\n', '')
         return line
 
     if task_type == 'cont':
@@ -794,12 +805,12 @@ def today():
                                 line[2] = live_time
 
 
-
+                today_index = int(day_index(str(today)[:10]))
                 if line[3] != "x":
-                    if day_index(str(today)[:10]) >= day_index(line[3][:10]):
+                    if today_index >= int(day_index(line[3][:10])):
                         to_do_today.append(line)
                     elif (int(day_index(line[3]))-int(line[5])+1) <= \
-                    int(day_index(str(today)[:10])):
+                    today_index:
                         to_do_today_as_well.append(line)
 
                 if line[3] == 'x':
@@ -815,11 +826,11 @@ def today():
                             print_time_labels(line[2]))
                 if print_time_labels(line[2]) == "0 minutes":
                     print " %s %s : %s." % (PID, line[0], line[1])
-            print
-
+            
             #Prints out the rest if you want to see them. 
             try:
                 if sys.argv[3] == "all":
+                    print
                     print "Also to do today:"
                     for x in range(len(to_do_today_as_well)):
                         line = to_do_today_as_well[x]
@@ -833,12 +844,12 @@ def today():
                                     print_time_labels(line[2]))
                         if print_time_labels(line[2]) == "0 minutes":
                             print " %s %s : %s." % (PID, line[0], line[1])
-                    print
-                    print
 
             #Nonsense is good.
             except: jesus = "is he dead?"
-
+            
+            print
+            print
             #Prints the total time left given the tasks to do.
             print "You have roughly %s of work to do." % print_time_labels(time_left_today)
             if time_also_left_today != "00:00:00":
@@ -1433,23 +1444,29 @@ def task_write():
 
 
     date = raw_input('date due: ')
-    date = date_string(date)
 
-    weight = raw_input('weight: ')
-
-
-    if (date != 'x'):
-        if date != str(today)[:10]:
+    if date != 'today':
+        if date != 'x':
 
             days_before = raw_input('days to work on: ')
 
-    if (date == 'x') or (date == str(today)[:10]):
+            print
+            print '(Task Types: hard  soft  cont  dead)'
+            task_type = raw_input('type: ')
+
+    if date == 'today':
 
         days_before = '1'
+        task_type = 'dead'
 
-    print
-    print '(Task Types: hard  soft  cont  dead)'
-    task_type = raw_input('type: ')
+    if date == 'x':
+
+        days_before = '1'
+        task_type = 'x'
+
+    date = date_string(date)
+
+    weight = raw_input('weight: ')
 
     PID = 0
     for line in lineList:
@@ -1508,6 +1525,83 @@ def todo():
     print "------------------------------------------------------------------------"
     print
 
+def view_list():
+    f = open(shopping_list, 'r+')
+    lineList = f.readlines()
+    print
+    urgent = []
+    food = []
+    life = []
+    uni = []
+    gifts = []
+    other = []
+
+    for line in lineList:
+        line = line.split(', ')
+        line[3] = line[3].replace('\n','')
+        if line[3] == 'y':
+            urgent.append(line)
+        if line[3] != 'y':
+            # Wish I could do line[2].append(line)
+            if line[2] == 'food':
+                food.append(line)
+            if line[2] == 'life':
+                life.append(line)
+            if line[2] == 'uni':
+                uni.append(line)
+            if line[2] == 'gifts':
+                gifts.append(line)
+            if line[2] == 'other':
+                other.append(line)
+    if urgent:
+        print 'URGENT: '
+        for item in urgent:
+            print '%s (%s,00 €) [%s]' % (item[0], item[1], item[2])
+        print
+    if food:
+        print 'Food:'
+        for item in food:
+            print '%s (%s,00 €)' % (item[0], item[1])
+        print
+    if life:
+        print 'Life:'
+        for item in life:
+            print '%s (%s,00 €)' % (item[0], item[1])
+        print
+    if gifts:
+        print 'Gifts:'
+        for item in gifts:
+            print '%s (%s,00 €)' % (item[0], item[1])
+        print
+    if uni:
+        print 'Uni:'
+        for item in uni:
+            print '%s (%s,00 €)' % (item[0], item[1])
+        print
+    if other:
+        print 'Other:'
+        for item in other:
+            print '%s (%s,00 €)' % (item[0], item[1])
+        print
+
+
+def buy():
+    f = open(shopping_list, 'r+')
+    lineList = f.readlines()
+    buyd = []
+    print 
+    print 'Add to list:'
+    item = raw_input('Item: ')
+    price = raw_input('Price (€): ')
+    print 'Reasons: food, life, gifts, uni, other'
+    reason = raw_input('Reason: ')
+    urgent = raw_input('Urgent [y/n]: ')
+    buyd.extend([item, price, reason, urgent])
+    buyd = ', '.join(buyd)
+    f.write(buyd)
+    print 'Added to list.'
+    print
+    f.close()
 
 #Today is now dependant in some aspects \
             #on tasks.csv
@@ -1555,6 +1649,10 @@ if __name__ == "__main__":
         todo()
     if (sys.argv[1] == "PID"):
         PID(sys.argv[2])
+    if (sys.argv[1] == 'list'):
+        view_list()
+    if (sys.argv[1] == 'buy'):
+        buy()
 
 
 '''
