@@ -15,9 +15,9 @@ import random
 import math
 import textwrap
 
-output_file_name = "/Users/richardlittauer/Github/wired-in/oxygen.csv"
-tasks_file = "/Users/richardlittauer/Github/wired-in/tasks.csv"
-shopping_list = "/Users/richardlittauer/Github/wired-in/shopping_list.csv"
+output_file_name = "/Users/richardlittauer/Github/wired-in/wyred/oxygen.csv"
+tasks_file = "/Users/richardlittauer/Github/wired-in/wyred/tasks.csv"
+shopping_list = "/Users/richardlittauer/Github/wired-in/wyred/shopping_list.csv"
 
 
 work_tasks = ["hiwi", "FLST", "PSR", "syntax", "CL4LRL", "stats"]
@@ -54,13 +54,13 @@ def help():
 #The following is for editing files
 def edit(x):
     if x == 'tasks':
-        x = 'tasks.csv'
+        x = 'wyred/tasks.csv'
     if x == 'log':
-        x =  'oxygen.csv'
+        x =  'wyred/oxygen.csv'
     if x == 'code':
         x = 'wired_in.py'
     if x == 'list':
-        x = 'shopping_list.csv'
+        x = 'wyred/shopping_list.csv'
     path = '/Users/richardlittauer/Github/wired-in/'
     command = sys.argv[1] + ' ' + path + x
     os.system(command)
