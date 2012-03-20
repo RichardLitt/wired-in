@@ -41,21 +41,22 @@ cool with this, I don't have a solution for you at the moment. I use [Quicksilve
 
 Download the script, and put it somewhere you're happy with it.
 
-Set up an symbolic link - I use `wyr` as an alias:
+Set up an symbolic link - I use `wyr`(and also `mask`)  as an alias:
 
     ln -s /Users/xyz/long/absolute/path/to/script.py /usr/bin/wyr
 
 Make it executable:
 
-    chmod a+x /Users/xyz/long/absolute/path/to/script.py
+    chmod a+x /Users/xyz/long/absolute/path/to/wired_in.py
 
 Change the path files in the beginning of wired_in.py to your path.
-Change file names accordingly. `wyr write`, `wyr buy`, and `wyr fence`
-will start you out with an entry in each file: tasks, shopping list,
-log.
+Change file names accordingly. `wyr write` (for tasks), `wyr buy` (for
+shopping lists), and `wyr fence` (for the log) will start you out with
+an entry in each file. `wyr help` will give you a more-or-less accurate
+list of the commands you can use. 
 
 I highly advise that you use this program along with [GeekTools](http://projects.tynsoe.org/en/geektool/) to stop the constant `wyr today tasks all`.
 Having it on the desktop is a great, easy, cluttered ux. 
 
 If you have a job and want to keep track of your hours, let me know and
-I'll hit you with my personal job python script. 
+I'll hit you with my personal work python script.
