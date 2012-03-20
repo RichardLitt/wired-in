@@ -30,4 +30,29 @@ small bugs that may need to be fixed. There's also a lot of references
 to the film Avatar - this started out being called Mask On, the idea
 being that I wanted to put my mask on when I went out into the jungle.
 Obviously this, and all other references, are merely for my own personal
-amusement, and shouldn't be taken too seriously. Skxawng. 
+amusement, and shouldn't be taken too seriously.
+
+Installation
+----
+
+Obviously, this is just a python script with various .csv databases.
+Download the script, and put it somewhere you're happy with it.
+
+Set up an symbolic link - I use `wyr` as an alias:
+
+  ln -s /Users/xyz/long/absolute/path/to/script.py /usr/bin/wyr
+
+Make it executable:
+
+  chmod a+x /Users/xyz/long/absolute/path/to/script.py
+
+Change the path files in the beginning of wired_in.py to your path.
+Change file names accordingly. `wyr write`, `wyr buy`, and `wyr fence`
+will start you out with an entry in each file: tasks, shopping list,
+log.
+
+I highly advise that you use this program along with [GeekTools](http://projects.tynsoe.org/en/geektool/) to stop the constant `wyr today tasks all`.
+Having it on the desktop is a great, easy, cluttered ux. 
+
+If you have a job and want to keep track of your hours, let me know and
+I'll hit you with my personal job python script. 
