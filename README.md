@@ -36,6 +36,9 @@ Installation
 ----
 
 Obviously, this is just a python script with various .csv databases.
+I run everything from the Terminal and using vi and mvim. If you're not
+cool with this, I don't have a solution for you at the moment. I use [Quicksilver](http://www.blacktree.com/) to access the Terminal quickly.
+
 Download the script, and put it somewhere you're happy with it.
 
 Set up an symbolic link - I use `wyr` as an alias:
