@@ -1,5 +1,7 @@
 hiwi.py
 oxygen.csv
 tasks.csv
-germany_tasks.csv
 database.db
+private/
+private/*
+/private/*
