@@ -43,11 +43,11 @@ Download the script, and put it somewhere you're happy with it.
 
 Set up an symbolic link - I use `wyr` as an alias:
 
-  ln -s /Users/xyz/long/absolute/path/to/script.py /usr/bin/wyr
+    ln -s /Users/xyz/long/absolute/path/to/script.py /usr/bin/wyr
 
 Make it executable:
 
-  chmod a+x /Users/xyz/long/absolute/path/to/script.py
+    chmod a+x /Users/xyz/long/absolute/path/to/script.py
 
 Change the path files in the beginning of wired_in.py to your path.
 Change file names accordingly. `wyr write`, `wyr buy`, and `wyr fence`
