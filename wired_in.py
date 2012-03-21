@@ -14,6 +14,10 @@ To do:
     - Find a way to figure out the time lost between projects.
     - make a date_added function. 
     - Make a function that separates work form non-work in today tasks. 
+    - Make contexts instead of individual projects, perhaps
+    - Make structure lists of things to do
+    - Order the output of today by weight, so top is most ranked.
+    - Percent done? It would need to be rewritable.
 """
 
 # Let's fedex in some packages!
@@ -733,7 +737,7 @@ def today():
             read_out_block = "%s for %s: %s" % (line[1], time_labels, \
                     read_out)
             dedented_text = textwrap.dedent(read_out_block).strip()
-            print textwrap.fill(dedented_text, initial_indent='', subsequent_indent='    ')
+            #print textwrap.fill(dedented_text, initial_indent='', subsequent_indent='    ')
             FMT = '%H:%M:%S'
             lt = datetime.strptime(worked, FMT)
             logged_time = datetime.strptime(str(logged_time), FMT) + \
@@ -880,6 +884,16 @@ def tasks():
 
     print
     print "You need to:"
+
+
+    # Sorts accoding to weight, and then alphabeticallyw
+    from operator import itemgetter, attrgetter
+    to_do_today = sorted(to_do_today, key=itemgetter(2), reverse=True)
+    to_do_today = sorted(to_do_today, key=itemgetter(4), reverse=True)
+
+    to_do_today_as_well = sorted(to_do_today_as_well, key=itemgetter(2),
+            reverse=True)
+    to_do_today_as_well = sorted(to_do_today_as_well, key=itemgetter(4), reverse=True)
 
     # Prints out what you have to do today (or yesterday...)
     for x in range(len(to_do_today)):
