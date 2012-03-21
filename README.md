@@ -37,8 +37,8 @@ Installation
 For Mac (my OS) or Linux.
 
 Obviously, this is just a python script with various .csv databases.
-I run everything from the Terminal and use mvim to manually edit the
-.csv's, as I don't have an easy write function made up. If you're not
+I run everything from the Terminal and use [mvim](http://code.google.com/p/macvim/) 
+to manually edit the .csv's, as I don't have an easy write function made up. If you're not
 cool with this, I don't have a solution for you at the moment. I use [Quicksilver](http://www.blacktree.com/) to access the Terminal quickly.
 
 Download the script, and put it somewhere you're happy with it.
@@ -52,9 +52,14 @@ Make it executable:
     chmod a+x /Users/xyz/long/absolute/path/to/wired_in.py
 
 Change the path files in the beginning of wired_in.py to your path.
-Change file names accordingly. `wyr write` (for tasks), `wyr buy` (for
-shopping lists), and `wyr fence` (for the log) will start you out with
-an entry in each file. `wyr help` will give you a more-or-less accurate
+Change file names accordingly. To get an opening line in each file,
+type:
+
+`wyr write` (for tasks)
+`wyr buy` (for shopping lists)
+`wyr fence` (for the log) 
+
+`wyr help` will give you a more-or-less accurate
 list of the commands you can use. 
 
 I highly advise that you use this program along with [GeekTools](http://projects.tynsoe.org/en/geektool/) to stop the constant `wyr today tasks all`.
