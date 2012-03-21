@@ -1,22 +1,22 @@
 Wired In
 ========
-Task Manager & Time Tracker
+Python-Based Task Manager & Time Tracker
 
-### From 'The Social Network'
+### From _The Social Network_:
 >SEAN: This house and this team are great. It’s exactly what it should be.
 >(to ANDREW)
 >I’m Sean Parker.
 
 >ANDREW pays no attention as MARK comes out of the kitchen--
 
->MARK: He’s _wired in._
+>MARK: He’s wired in.
 
 >SEAN: That’s what I’m talkin’ about.
 
 About Wired In
 ----
 This is my joint time tracker and task organiser. Sometime around
-October 2011 I got fedup using post it notes, text files, complicated
+October 2011 I got fed up with using post-it notes, text files, online sites, complicated
 local wordpress installations, etc. to keep track of what I do, how I do
 it, and when I do it. I figured with a lot of work I could make a
 program that does it better - this is the result, still in progress. 
