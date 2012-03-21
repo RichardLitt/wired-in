@@ -6,11 +6,8 @@ Python-Based Task Manager & Time Tracker
 >SEAN: This house and this team are great. It’s exactly what it should be.
 >(to ANDREW)
 >I’m Sean Parker.
-
 >ANDREW pays no attention as MARK comes out of the kitchen--
-
 >MARK: He’s wired in.
-
 >SEAN: That’s what I’m talkin’ about.
 
 About Wired In
@@ -34,14 +31,16 @@ amusement, and shouldn't be taken too seriously.
 
 Installation
 ----
+For Mac (my OS) or Linux.
 
 Obviously, this is just a python script with various .csv databases.
-I run everything from the Terminal and using vi and mvim. If you're not
+I run everything from the Terminal and use mvim to manually edit the
+.csv's, as I don't have an easy write function made up. If you're not
 cool with this, I don't have a solution for you at the moment. I use [Quicksilver](http://www.blacktree.com/) to access the Terminal quickly.
 
 Download the script, and put it somewhere you're happy with it.
 
-Set up an symbolic link - I use `wyr`(and also `mask`)  as an alias:
+Set up a symbolic link - I use `wyr', and also `mask`, as aliases:
 
     ln -s /Users/xyz/long/absolute/path/to/script.py /usr/bin/wyr
 
