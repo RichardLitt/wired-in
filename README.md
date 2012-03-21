@@ -41,7 +41,7 @@ I run everything from the Terminal and use [mvim](http://code.google.com/p/macvi
 to manually edit the .csv's, as I don't have an easy write function made up. If you're not
 cool with this, I don't have a solution for you at the moment. I use [Quicksilver](http://www.blacktree.com/) to access the Terminal quickly.
 
-Download the script, and put it somewhere you're happy with it.
+Download the script, and put it somewhere you're happy with it being.
 
 Set up a symbolic link - I use `wyr`, and also `mask`, as aliases:
 
@@ -55,12 +55,11 @@ Change the path files in the beginning of wired_in.py to your path.
 Change file names accordingly. To get an opening line in each file,
 type:
 
-`wyr write` (for tasks)
-`wyr buy` (for shopping lists)
-`wyr fence` (for the log) 
+    wyr write
+    wyr buy
+    wyr fence
 
-`wyr help` will give you a more-or-less accurate
-list of the commands you can use. 
+`wyr help` will give you a more-or-less accurate list of the commands you can use. 
 
 I highly advise that you use this program along with [GeekTools](http://projects.tynsoe.org/en/geektool/) to stop the constant `wyr today tasks all`.
 Having it on the desktop is a great, easy, cluttered ux. 
