@@ -1,8 +1,11 @@
 #!/Library/Frameworks/Python.framework/Versions/Current/bin/python
 #-*- coding: utf-8 -*-
+
 """
-This is a code for managing my time in a simple and orderly fashion.
-Richard Littauer
+Wired In: Time tracker and Task manager
+CC-Share Alike 2012 © Richard Littauer
+https://github.com/RichardLitt/wired-in
+
 
 To do:
     - integrate with an SQL database, make the comment feature better.
@@ -30,7 +33,7 @@ tasks_file = "/Users/richardlittauer/Github/wired-in/wyred/tasks.csv"
 shopping_list = "/Users/richardlittauer/Github/wired-in/wyred/shopping_list.csv"
 
 # These change each semester, obviously.
-work_tasks = ["hiwi", "FLST", "PSR", "syntax", "CL4LRL", "stats"]
+work_tasks = ["hiwi", "FLST", "PSR", "syntax", "CL4LRL", "stats", "research"]
 
 # The help desk.
 def help():
@@ -393,10 +396,11 @@ def task_division(line):
             days_left = int(day_index(date_due))-int(day_index(today))+1
             if days_left <= 0:
                 days_left = 1
+            line[3] = today
+
         time_for_task = (time_for_task / days_left) \
                 + time_for_task%days_left
 
-        line[3] = today
 
         # This converts 183 into 03:03:00
         tft = []
@@ -547,6 +551,7 @@ def end():
         comment = 'class'
     if comment == 'h':
         comment = 'homework'
+    PID = raw_input('PID: - ')
     print
 
     print 'You were on the surface of Pandora from: ' + on[:19] + ' to ' + off[11:19] + '.'
@@ -555,7 +560,7 @@ def end():
         pattern = re.compile("\d+")
         match_o = re.match(pattern, comment)
         if (match_o != None):
-                print "You survived for %s, and killed like %s nantangs." % (time_labels, match_o.group())
+                print "You survived for %s, and killed like %s %s." % (time_labels, match_o.group())
         if (match_o == None):
                 print "You survived for %s." % time_labels
     except: x = "moose"
@@ -567,6 +572,7 @@ def end():
     f.write(total_time + ", ")
     f.write(project + ", ")
     f.write(comment.replace("\"", "'"))
+    f.write(', ' + PID)
     f.write("\n")
     f.close()
 
@@ -816,34 +822,53 @@ def tasks():
         # Checks based on PIDs if the task if done 
         # Subtracts time from tasks done. 
             # To do:
-                # Repeating tasks.
-                # Under zero tasks?
                 # In progress tasks.
+                # No way of doing this atm - should log PIDs too, I guess?
+                # Would have to change from .csv to do this. :/
 
         for log in oxygenList:
             log = log.split(', ')
-            if len(log) == 6: skip = "should be a function"
+
+            # Ideally, this shouldn't neet to happen, but that's dependant on
+            # only logging tasks to do.
+            if len(log) == 6: skip = "no PID"
             if len(log) == 7:
                 if log[6] == line[7]:
                     if log[0][:10] == str(today)[:10]:
+                        FMT = '%H:%M:%S'
                         tdelta = datetime.strptime(line[2], FMT) - \
                         datetime.strptime(log[3], FMT)
                         live_time = str(tdelta)
+                        # Fixes a bug that puts the time into negative days
+                        # when it is over the time specified
+                        if len(live_time) != 8:
+                            live_time = '00:00:00'
+                        # Makes sure it is HH:MM:SS format
                         if len(live_time) == 7:
                             live_time = '0' + live_time
+                        # Sets the time left to do for this project.
                         line[2] = live_time
 
-
+        # This is basically if it matches today or not. 
         today_index = int(day_index(str(today)[:10]))
+        # If it is not one of those 'do sometime' tasks.
         if line[3] != "x":
+            # If it needs to be done today today.
             if today_index >= int(day_index(line[3][:10])):
-                to_do_today.append(line)
+                # Because we don't need non-specific tasks in here.
+                if line[2] != '00:00:00':
+                    
+                    to_do_today.append(line)
+                if line[2] == '00:00:00':
+                    to_do_today_as_well.append(line)
+            # Or if it is due tomorrow but should be done today.
             elif (int(day_index(line[3]))-int(line[5])+1) <= \
             today_index:
                 to_do_today_as_well.append(line)
-
+        # If it is one of those...
         if line[3] == 'x':
             to_do_today_as_well.append(line)
+
 
     # Prints the projects you need to do today.
     projects = []
@@ -1321,7 +1346,8 @@ def fence():
             pattern = re.compile("\d+")
             match_o = re.match(pattern, comment)
             if (match_o != None):
-                    print "You survived for %s, and killed like %s nantangs." % (time_labels, match_o.group())
+                    print "You survived for %s, and killed like %s %s." %\
+                    (time_labels, match_o.group(), random_navi_animal())
             if (match_o == None):
                     print "You survived for %s." % time_labels
         except: x = "moose"
@@ -1515,11 +1541,15 @@ def task_write():
             ', ' + task_type + ', ' + str(PID) + '\n')
     f.close()
 
+# Today has some messed up metric where it views also to do today as today, and
+# just task (sys.argv[2]) doesn't work for some reason. Huh. Will need fixing. 
 def todo():
     f = open(tasks_file, 'r+')
     lineList = f.readlines()
     to_do_today = []
+    error = []
     for line in lineList:
+        line = task_division(line)
         line = line.split(', ')
         today = datetime.datetime.now()
         if str(today)[:10] == line[3][:10]:
@@ -1538,28 +1568,35 @@ def todo():
             if (sys.argv[2] == "all"):
                 if line[3] == "x":
                     to_do_today.append(line)
-        except: this_is = "a fail"
-    weights = 0
-    lst = []
-    for line in to_do_today:
-        weights += int(line[4])
-    for x in range(len(to_do_today)):
-        line = to_do_today[x]
-        app = (x, line[0], float(line[4])/weights)
-        lst.append(app)
-    line = to_do_today[w_choice(lst)]
-    print
-    print "---------------------------Task Appointed-------------------------------"
-    print " Behold! The task appointed for you!"
-    print
-    print " Under the auspices of \'%s\', you must:" % line[0]
-    print " %s." % line[1]
-    try:
-        print " This may take up to %s." % print_time_labels(line[2])
-        print " This is due on %s." % line[3][:10]
-    except: damn = "damn"
-    print "------------------------------------------------------------------------"
-    print
+        except: error.append('error')
+
+    if len(error) == len(lineList):
+        print
+        print 'There are simply no tasks due today, apparently.'
+        print
+
+    if len(error) != len(lineList):
+        weights = 0
+        lst = []
+        for line in to_do_today:
+            weights += int(line[4])
+        for x in range(len(to_do_today)):
+            line = to_do_today[x]
+            app = (x, line[0], float(line[4])/weights)
+            lst.append(app)
+        line = to_do_today[w_choice(lst)]
+        print
+        print "---------------------------Task Appointed-------------------------------"
+        print " Behold! The task appointed for you!"
+        print
+        print " Under the auspices of \'%s\', you must:" % line[0]
+        print " %s." % line[1]
+        try:
+            print " This may take up to %s." % print_time_labels(line[2])
+            print " This is due on %s." % line[3][:10]
+        except: damn = "damn"
+        print "------------------------------------------------------------------------"
+        print
 
 '''
 The following functions are for shopping lists.
