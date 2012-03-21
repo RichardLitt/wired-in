@@ -6,8 +6,11 @@ Python-Based Task Manager & Time Tracker
 >SEAN: This house and this team are great. It’s exactly what it should be.
 >(to ANDREW)
 >I’m Sean Parker.
+
 >ANDREW pays no attention as MARK comes out of the kitchen--
+
 >MARK: He’s wired in.
+
 >SEAN: That’s what I’m talkin’ about.
 
 About Wired In
@@ -40,7 +43,7 @@ cool with this, I don't have a solution for you at the moment. I use [Quicksilve
 
 Download the script, and put it somewhere you're happy with it.
 
-Set up a symbolic link - I use `wyr', and also `mask`, as aliases:
+Set up a symbolic link - I use `wyr`, and also `mask`, as aliases:
 
     ln -s /Users/xyz/long/absolute/path/to/script.py /usr/bin/wyr
 
