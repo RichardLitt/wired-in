@@ -18,6 +18,8 @@ To do:
     - Make structure lists of things to do
     - Order the output of today by weight, so top is most ranked.
     - Percent done? It would need to be rewritable.
+    - Tasks that are not minute based but object based - for instance,
+      articles.
 """
 
 # Let's fedex in some packages!
@@ -1702,54 +1704,39 @@ The final argument functions.
 # Today is now dependant in some aspects \
             # on tasks.csv
 if __name__ == "__main__":
-    if (sys.argv[1] == "mvim"):
-        edit(sys.argv[2])
-    if (sys.argv[1] == "vi"):
-        edit(sys.argv[2])
-    if (sys.argv[1] == "test"):
-        task_division(sys.argv[2])
-    if (sys.argv[1] == "tasks"):
-        tasks()
-    if (sys.argv[1] == "today"):
-        today()
-    if (sys.argv[1] == "vacation"):
-        vacation()
-    if (sys.argv[1] == "search"):
-        search()
-    if (sys.argv[1] == "cease"):
-        cease()
-    if (sys.argv[1] == "status"):
-        status()
-    if (sys.argv[1] == "end"):
-        end()
-    if (sys.argv[1] == "begin") or (sys.argv[1] == "being"):
-        begin()
-    if (sys.argv[1] == "start"):
-        begin()
-    if (sys.argv[1] == "help"):
-        help()
-    if (sys.argv[1] == "yesterday"):
-        yesterday()
-    if (sys.argv[1] == "topics"):
-        topics()
-    if (sys.argv[1] == "week"):
-        this_week()
-    if (sys.argv[1] == "fence"):
-        fence()
-    # From here is for the tasks.csv file.
-    if (sys.argv[1] == "projects"):
-        projects()
-    if (sys.argv[1] == "random"):
-        random_task()
-    if (sys.argv[1] == "write") or (sys.argv[1] == "w"):
-        task_write()
-    if (sys.argv[1] == "task"):
-        todo()
-    if (sys.argv[1] == "PID"):
-        PID(sys.argv[2])
-    if (sys.argv[1] == 'list'):
-        view_list()
-    if (sys.argv[1] == 'buy'):
-        buy()
+    try:
+        # Editing
+        if (sys.argv[1] == "mvim"): edit(sys.argv[2])
+        if (sys.argv[1] == "vi"): edit(sys.argv[2])
+        if (sys.argv[1] == "test"): task_division(sys.argv[2])
 
-# Today's my birthday, after all.
+        # Logs
+        if (sys.argv[1] == "today"): today()
+        if (sys.argv[1] == "vacation"): vacation()
+        if (sys.argv[1] == "search"): search()
+        if (sys.argv[1] == "cease"): cease()
+        if (sys.argv[1] == "status"): status()
+        if (sys.argv[1] == "end"): end()
+        if (sys.argv[1] == "begin") or (sys.argv[1] == "being"): begin()
+        if (sys.argv[1] == "start"): begin()
+        if (sys.argv[1] == "help"): help()
+        if (sys.argv[1] == "yesterday"): yesterday()
+        if (sys.argv[1] == "topics"): topics()
+        if (sys.argv[1] == "week"): this_week()
+        if (sys.argv[1] == "fence"): fence()
+
+        # Tasks
+        if (sys.argv[1] == "tasks"): tasks()
+        if (sys.argv[1] == "projects"): projects()
+        if (sys.argv[1] == "random"): random_task()
+        if (sys.argv[1] == "write") or (sys.argv[1] == "w"): task_write()
+        if (sys.argv[1] == "task"): todo()
+        if (sys.argv[1] == "PID"): PID(sys.argv[2])
+
+        # Shopping list
+        if (sys.argv[1] == 'list'): view_list()
+        if (sys.argv[1] == 'buy'): buy()
+
+    except: print '\n You were just mauled by a ' + random_navi_animal() + '.\n '
+
+# Today's my birthday, after all. - Jake Sully
