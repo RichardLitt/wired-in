@@ -2,27 +2,15 @@
 #-*- coding: utf-8 -*-
 
 """
+
 Wired In: Time tracker and Task manager
 CC-Share Alike 2012 © Richard Littauer
 https://github.com/RichardLitt/wired-in
 
-
-To do:
-    - integrate with an SQL database, make the comment feature better.
-    - Add in a thing about weekly estimates.
-    - Divide up tasks according to days left in them. 
-    - Find a way to figure out the time lost between projects.
-    - make a date_added function. 
-    - Make a function that separates work form non-work in today tasks. 
-    - Make contexts instead of individual projects, perhaps
-    - Make structure lists of things to do
-    - Order the output of today by weight, so top is most ranked.
-    - Percent done? It would need to be rewritable.
-    - Tasks that are not minute based but object based - for instance,
-      articles.
 """
 
 # Let's fedex in some packages!
+# This may not be the best way to do this, actually. 
 import os
 import time
 import datetime
@@ -34,9 +22,10 @@ import math
 import textwrap
 
 # These are going to have to be edited for new users.
-output_file_name = "/Users/richardlittauer/Github/wired-in/wyred/oxygen.csv"
-tasks_file = "/Users/richardlittauer/Github/wired-in/wyred/tasks.csv"
-shopping_list = "/Users/richardlittauer/Github/wired-in/wyred/shopping_list.csv"
+folder_path = '/Users/richardlittauer/Github/wired-in/'
+output_file_name = folder_path + 'wyred/oxygen.csv'
+tasks_file = folder_path +  'wyred/tasks.csv'
+shopping_list = folder_path + 'wyred/shopping_list.csv'
 
 # These change each semester, obviously.
 work_tasks = ["hiwi", "FLST", "PSR", "syntax", "CL4LRL", "stats", "research"]
@@ -102,9 +91,11 @@ def print_time_labels(input_time):
         minute_string = "minute"
     if seconds == 1:
         second_string = "second"
-    output = "%s %s, %s %s, and %s %s" % (hours, hour_string, minutes, minute_string, seconds, second_string)
+
+    ## Removes seconds. Should remove from the function completely.
+    output = "%s %s and %s %s" % (hours, hour_string, minutes, minute_string)
     if hours == 0:
-        output = "%s %s and %s %s" % (minutes, minute_string, seconds, second_string)
+        output = "%s %s" % (minutes, minute_string)
     if seconds == 0:
         output = "%s %s and %s %s" % (hours, hour_string, minutes, minute_string)
     if minutes == 0:
@@ -335,6 +326,13 @@ def PID(PID):
 # if you use the lines then. This isn't currently a problem, but might be
 # eventually.
 
+# Makes a minute index HHMMSS
+def minutes_index(string):
+    output = 0
+    string = string.split(':')
+    output = int(string[0])*60 + int(string[1])
+    return output
+
 def task_division(line):
     line  = line.split(', ')
     'life, Memorize the articles of the constitution, \
@@ -374,12 +372,11 @@ def task_division(line):
     if task_type == 'soft':
 
         start_appearing = int(day_index(date_due)) - int(days_to_do)
-        time_for_task = int(line[2][0:2])*60 + int(line[2][3:5])
+        time_for_task = minutes_index(line[2])
 
         # This checks if there has already been work done. 
         f = open(output_file_name, 'r+')
         lineList = f.readlines()
-
 
         # This checks the logs based on PIDs to see if any work has been 
         # done yet.
@@ -406,7 +403,6 @@ def task_division(line):
 
         time_for_task = (time_for_task / days_left) \
                 + time_for_task%days_left
-
 
         # This converts 183 into 03:03:00
         tft = []
@@ -441,16 +437,34 @@ def task_division(line):
                             + int(time_done[1])
                     time_for_task = time_for_task - time_taken_already
         if time_for_task <= line[2]:
-            today =datetime.datetime.now()
-            line[3] = str(today)[:8] + str(int(str(today)[8:10])+1)
+            today = datetime.datetime.now()
+            line[3] = day_index(str(int(day_index(str(today)[:10]))+1))
         if time_for_task > line[2]:
             line[3] = str(datetime.datetime.now())[:10]
         line = ', '.join(line)
         return line
 
+    '''
+    # For repeating tasks (cont) that differ in time too much to calculate
+    if task_type == 'obj':
+        # Has it been logged yet?
+        f = open(output_file_name, 'r+')
+        lineList = f.readlines()
+        for logline in lineList:
+            logline = logline.split(', ')
+            if len(logline) == int(7):
+                logPID = logline[6].replace('\n','')
+                if logPID == PID:
+                    # If so, then make the next day tomorrow. 
+                    today = datetime.datetime.now()
+                    line[3] = day_index(str(int(day_index(str(today)[:10]))+1))
+        line = ', '.join(line)
+        return line
+    '''
+
     if task_type == 'x':
         today =datetime.datetime.now()
-        line[3] = str(today)[:8] + str(int(str(today)[8:10])+1)
+        line[3] = day_index(str(int(day_index(str(today)[:10]))+1))
         # Going to want to fix this so that it goes over month boundaries. 
 
         line = ', '.join(line)
@@ -739,7 +753,7 @@ def today():
             read_out_block = "%s for %s: %s" % (line[1], time_labels, \
                     read_out)
             dedented_text = textwrap.dedent(read_out_block).strip()
-            #print textwrap.fill(dedented_text, initial_indent='', subsequent_indent='    ')
+            print textwrap.fill(dedented_text, initial_indent='', subsequent_indent='    ')
             FMT = '%H:%M:%S'
             lt = datetime.strptime(worked, FMT)
             logged_time = datetime.strptime(str(logged_time), FMT) + \
@@ -842,18 +856,28 @@ def tasks():
                 if log[6] == line[7]:
                     if log[0][:10] == str(today)[:10]:
                         FMT = '%H:%M:%S'
+
+# Should be redone using minute_index()
+
                         tdelta = datetime.strptime(line[2], FMT) - \
                         datetime.strptime(log[3], FMT)
                         live_time = str(tdelta)
+                        # Makes sure it is HH:MM:SS format
+                        if len(live_time) == 7:
+                            live_time = '0' + live_time
                         # Fixes a bug that puts the time into negative days
                         # when it is over the time specified
                         if len(live_time) != 8:
                             live_time = '00:00:00'
-                        # Makes sure it is HH:MM:SS format
-                        if len(live_time) == 7:
-                            live_time = '0' + live_time
+
+                            # Removes it from also to do, as you've done enough
+                            # on it today
+                            line[3] = day_index(str(int(day_index(line[3]))+1))
+                            line[5] = '1'
+
                         # Sets the time left to do for this project.
                         line[2] = live_time
+
 
         # This is basically if it matches today or not. 
         today_index = int(day_index(str(today)[:10]))
@@ -863,7 +887,6 @@ def tasks():
             if today_index >= int(day_index(line[3][:10])):
                 # Because we don't need non-specific tasks in here.
                 if line[2] != '00:00:00':
-                    
                     to_do_today.append(line)
                 if line[2] == '00:00:00':
                     to_do_today_as_well.append(line)
@@ -874,7 +897,6 @@ def tasks():
         # If it is one of those...
         if line[3] == 'x':
             to_do_today_as_well.append(line)
-
 
     # Prints the projects you need to do today.
     projects = []
@@ -920,10 +942,10 @@ def tasks():
                         time_also_left_today)
                 # print " %s %s : %s for %s." % (PID, line[0], line[1], \
                 #        print_time_labels(line[2]))
-                if print_time_labels(line[2]) != "0 minutes":
+                if print_time_labels(line[2]) != "a while":
                     print " %s %s : %s for %s." % (PID, line[0], line[1], \
                             print_time_labels(line[2]))
-                if print_time_labels(line[2]) == "0 minutes":
+                if print_time_labels(line[2]) == "a while":
                     print " %s %s : %s." % (PID, line[0], line[1])
 
     # Nonsense is good.
@@ -1060,6 +1082,7 @@ def vacation():
 
                 if day_index(str(today)[:10]) >= day_index(line[3][:10]):
                     to_do_today.append(line)
+
                 elif (int(day_index(line[3]))-int(line[5])+1) <= \
                 int(day_index(str(today)[:10])):
                     to_do_today.append(line)
@@ -1098,7 +1121,7 @@ def yesterday():
         if int(today_date[8:]) < 30:
             modify_date = int(today_date[8:])-1
             today_date = today_date[:8] + str(modify_date)
-        if int(today_date[8:]) >= 30: print "Uh. End of month. Awkward."
+        if int(today_date[8:]) <= 7: print "Uh. End of month. Awkward."
         line  = line.split(', ')
         if today_date == line[0][:10]:
             worked = line[3]
@@ -1148,7 +1171,7 @@ def this_week():
             if int(today_date[8:]) < 30:
                 modify_date = int(today_date[8:])-x
                 today_date = today_date[:8] + str(modify_date)
-            if int(today_date[8:]) >= 30: print "Uh. End of month. Awkward."
+            if int(today_date[8:]) <= 07: print "Uh. End of month. Awkward."
             line  = line.split(', ')
             if today_date == line[0][:10]:
 
@@ -1318,7 +1341,6 @@ def fence():
         ## Find the first time. 
         if first_time == "last":
             on = last_line[2]
-            print on
         if first_time != "last":
             pattern = re.compile("\d+:\d+")
             match_o = re.match(pattern, first_time)
@@ -1705,6 +1727,12 @@ The final argument functions.
             # on tasks.csv
 if __name__ == "__main__":
     try:
+
+        possible_arguments = ['mvim', 'vi', 'test', 'today', 'vacation',
+        'search', 'cease', 'status', 'end', 'begin', 'being', 'start', 'help',
+        'yesterday', 'topics', 'week', 'fence', 'tasks', 'projects', 'random',
+        'write', 'task', 'PID', 'list', 'buy']
+
         # Editing
         if (sys.argv[1] == "mvim"): edit(sys.argv[2])
         if (sys.argv[1] == "vi"): edit(sys.argv[2])
@@ -1737,6 +1765,9 @@ if __name__ == "__main__":
         if (sys.argv[1] == 'list'): view_list()
         if (sys.argv[1] == 'buy'): buy()
 
-    except: print '\n You were just mauled by a ' + random_navi_animal() + '.\n '
+        if sys.argv[1] not in possible_arguments:
+            print '\n You were just mauled by a ' + random_navi_animal() + '.\n '
+
+    except: status()
 
 # Today's my birthday, after all. - Jake Sully
