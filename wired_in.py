@@ -622,6 +622,7 @@ def status():
         time_labels = print_time_labels(time_since)
         print "You have not been working for %s." % time_labels
         print
+        print on
         on = on.replace('\n', '').split(', ')
         print "Your last job, %s, lasted %s. Comment: \n%s" % (on[4], print_time_labels(on[3]), on[5])
         if len(time_since) >= 10:
@@ -727,6 +728,7 @@ def today():
     total_time_alt = "00:00:00"
     logged_time = "00:00:00"
     specific_job_catch = "empty"
+    done_jobs = []
 
     for line in lineList:
         line = line.replace('\n', '').split(', ')
@@ -752,8 +754,7 @@ def today():
             time_labels = print_time_labels(worked)
             read_out_block = "%s for %s: %s" % (line[1], time_labels, \
                     read_out)
-            dedented_text = textwrap.dedent(read_out_block).strip()
-            print textwrap.fill(dedented_text, initial_indent='', subsequent_indent='    ')
+            done_jobs.append(read_out_block)
             FMT = '%H:%M:%S'
             lt = datetime.strptime(worked, FMT)
             logged_time = datetime.strptime(str(logged_time), FMT) + \
@@ -792,7 +793,6 @@ def today():
     productivity_measure =(float(total_time[:2])*60+ \
             float(total_time[3:5]))/500*100
 
-    print
     print "You have worked a total of %s today." % print_time_labels(total_time)
     if total_time != logged_time:
         print "(But you've logged %s.)" % print_time_labels(logged_time)
@@ -818,6 +818,10 @@ def today():
             tasks()
     except: jesus = "dead"
     print 
+    print "----------------------------------"
+    for job in done_jobs:
+        dedented_text = textwrap.dedent(job).strip()
+        print textwrap.fill(dedented_text, initial_indent='', subsequent_indent='    ')
 
 # This basically shows what you need to do today. 
 def tasks():
@@ -1111,17 +1115,16 @@ def yesterday():
     time_now = datetime.now()
     print 
     print "-----------------------------Yesterday---------------------------------"
+    print
     total_time = "00:00:00"
     total_time_alt = "00:00:00"
     logged_time = "00:00:00"
     specific_job_catch = "empty"
     for line in lineList:
         line = line.replace('\n', '')
-        today_date = str(time_now)[:10]
-        if int(today_date[8:]) < 30:
-            modify_date = int(today_date[8:])-1
-            today_date = today_date[:8] + str(modify_date)
-        if int(today_date[8:]) <= 7: print "Uh. End of month. Awkward."
+        today_date = day_index(str(time_now)[:10])
+        modify_date = int(today_date)-1
+        today_date = day_index(modify_date)
         line  = line.split(', ')
         if today_date == line[0][:10]:
             worked = line[3]
@@ -1140,12 +1143,20 @@ def yesterday():
                 total_time = str(total_time)[11:]
     productivity_measure = (float(total_time[:2])*60+\
             float(total_time[3:5]))/500*100
-    print
-    print "You worked a total of %s yesterday." % print_time_labels(total_time)
-    print "(But you logged %s.)" % print_time_labels(logged_time)
-    print "You were %.2f%% productive." % productivity_measure
-    print "-----------------------------------------------------------------------"
-    print 
+    if total_time == '00:00:00':
+        print "    You didn't log any work yesterday."
+        print "    You were not productive in that regard."
+        print
+        print "-----------------------------------------------------------------------"
+        print 
+    if total_time != '00:00:00':
+        print
+        print "You worked a total of %s yesterday." % print_time_labels(total_time)
+        print "(But you logged %s.)" % print_time_labels(logged_time)
+        print "You were %.2f%% productive." % productivity_measure
+        print
+        print "-----------------------------------------------------------------------"
+        print 
 
 def this_week():
     from datetime import datetime
@@ -1167,11 +1178,9 @@ def this_week():
         specific_job_catch = "empty"
         for line in lineList:
             line = line.replace('\n', '')
-            today_date = str(time_now)[:10]
-            if int(today_date[8:]) < 30:
-                modify_date = int(today_date[8:])-x
-                today_date = today_date[:8] + str(modify_date)
-            if int(today_date[8:]) <= 07: print "Uh. End of month. Awkward."
+            today_date = day_index(str(time_now)[:10])
+            modify_date = int(today_date)-int(x)
+            today_date = day_index(modify_date)
             line  = line.split(', ')
             if today_date == line[0][:10]:
 
@@ -1723,6 +1732,23 @@ def buy():
 The final argument functions.
 '''
 
+'''
+This is an attempt to basically make argparse work instead.
+Kind of abandoned due to difficulty, and due to not wanting to use
+excess key strokes to type in - for each command.
+
+if __name__ == '__main__':
+    import argparse
+    parser = argparse.ArgumentParser()
+    parser.add_argument('-w', '--write', action='store_true', help='Write a task to file')
+    parser.add_argument('-v', dest='verbose', action='store_true')
+    args = parser.parse_args()
+    if (args.write): 
+        task_write()
+    # ... do something with args.output ...
+    # ... do something with args.verbose ..
+
+'''
 # Today is now dependant in some aspects \
             # on tasks.csv
 if __name__ == "__main__":
@@ -1731,43 +1757,44 @@ if __name__ == "__main__":
         possible_arguments = ['mvim', 'vi', 'test', 'today', 'vacation',
         'search', 'cease', 'status', 'end', 'begin', 'being', 'start', 'help',
         'yesterday', 'topics', 'week', 'fence', 'tasks', 'projects', 'random',
-        'write', 'task', 'PID', 'list', 'buy']
+        'write', 'task', 'PID', 'list', 'buy', 'm', 'v', 'to', 's', 'e', 'b',
+        'h', 'y', 'f', 'ta', 'p', 'r', 'w', 'l']
 
         # Editing
-        if (sys.argv[1] == "mvim"): edit(sys.argv[2])
-        if (sys.argv[1] == "vi"): edit(sys.argv[2])
+        if (sys.argv[1] == "mvim") or (sys.argv[1] == "m"): edit(sys.argv[2])
+        if (sys.argv[1] == "vi") or (sys.argv[1] == "v"): edit(sys.argv[2])
         if (sys.argv[1] == "test"): task_division(sys.argv[2])
 
         # Logs
-        if (sys.argv[1] == "today"): today()
+        if (sys.argv[1] == "today") or (sys.argv[1] == "to"): today()
         if (sys.argv[1] == "vacation"): vacation()
         if (sys.argv[1] == "search"): search()
         if (sys.argv[1] == "cease"): cease()
-        if (sys.argv[1] == "status"): status()
-        if (sys.argv[1] == "end"): end()
-        if (sys.argv[1] == "begin") or (sys.argv[1] == "being"): begin()
+        if (sys.argv[1] == "status") or (sys.argv[1] == "s"): status()
+        if (sys.argv[1] == "end") or (sys.argv[1] == "e"): end()
+        if (sys.argv[1] == "begin") or (sys.argv[1] == "b"): begin()
         if (sys.argv[1] == "start"): begin()
-        if (sys.argv[1] == "help"): help()
-        if (sys.argv[1] == "yesterday"): yesterday()
+        if (sys.argv[1] == "help") or (sys.argv[1] == "h"): help()
+        if (sys.argv[1] == "yesterday") or (sys.argv[1] == "y"): yesterday()
         if (sys.argv[1] == "topics"): topics()
         if (sys.argv[1] == "week"): this_week()
-        if (sys.argv[1] == "fence"): fence()
+        if (sys.argv[1] == "fence") or (sys.argv[1] == "f"): fence()
 
         # Tasks
-        if (sys.argv[1] == "tasks"): tasks()
-        if (sys.argv[1] == "projects"): projects()
-        if (sys.argv[1] == "random"): random_task()
+        if (sys.argv[1] == "tasks") or (sys.argv[1] == "ta"): tasks()
+        if (sys.argv[1] == "projects") or (sys.argv[1] == "p"): projects()
+        if (sys.argv[1] == "random") or (sys.argv[1] == "r"): random_task()
         if (sys.argv[1] == "write") or (sys.argv[1] == "w"): task_write()
         if (sys.argv[1] == "task"): todo()
         if (sys.argv[1] == "PID"): PID(sys.argv[2])
 
         # Shopping list
-        if (sys.argv[1] == 'list'): view_list()
+        if (sys.argv[1] == 'list') or (sys.argv[1] == "l"): view_list()
         if (sys.argv[1] == 'buy'): buy()
 
         if sys.argv[1] not in possible_arguments:
             print '\n You were just mauled by a ' + random_navi_animal() + '.\n '
-
     except: status()
+
 
 # Today's my birthday, after all. - Jake Sully
