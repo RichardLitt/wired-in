@@ -462,7 +462,7 @@ def task_division(line):
 
                     # If there was work done today
                     if str(today)[:10] == logline[0][:10]:
-
+                        
                         # Adjust the minutes left to do.
                         time_taken_already = minutes_index(logline[3])
                         time_for_task = time_for_task - time_taken_already
@@ -611,10 +611,12 @@ def end():
         FMT = '%H:%M:%S'
         tdelta = datetime.strptime(off[11:19], FMT) - datetime.strptime(on[11:19], FMT)
         total_time = str(tdelta)
-        if len(total_time) == 15:
-            total_time = total_time[-7:]
+
+        # This was adjusted to make the time not be stored as seven
         if len(total_time) == 16:
             total_time = total_time[-8:]
+        if len(total_time) == 15:
+            total_time = '0' + total_time[-7:]
         comment = raw_input('comment: ')
         comment = comment.replace(', ', ',')
         if comment == "x":
@@ -767,17 +769,25 @@ def search():
     if days == 1:
         day_string = "day"
     if days != 0:
-        if sys.argv[2] == "coding":
+        if sys.argv[2] == "wyring":
+            print
             print "You have worked on this project for %d %s and %s." % (days, \
                     day_string, print_time_labels(total_time))
-        if sys.argv[2] != "coding":
+            print
+        if sys.argv[2] != "wyring":
+            print
             print "You have worked on %s for %d %s and %s." % (sys.argv[2], \
                 days, day_string, print_time_labels(total_time))
+            print
     if days == 0:
-        if sys.argv[2] == "coding":
+        if sys.argv[2] == "wyring":
+            print
             print "You have worked on this project for %s." % print_time_labels(total_time)
-        if sys.argv[2] != "coding":
+            print
+        if sys.argv[2] != "wyring":
+            print
             print "You have worked on %s for %s." % (sys.argv[2], print_time_labels(total_time))
+            print
     print "------------------------------------------------------------------------"
     print
     f.close()
@@ -1447,10 +1457,8 @@ def fence():
         FMT = '%H:%M:%S'
         tdelta = datetime.strptime(off[11:19], FMT) - datetime.strptime(on[11:19], FMT)
         total_time = str(tdelta)
-        if len(total_time) == 15:
-            total_time = total_time[-7:]
-        if len(total_time) == 16:
-            total_time = total_time[-8:]
+        if len(total_time) == 7:
+            total_time = '0' + total_time
         print 'You were on the surface of Pandora from: ' + on[:19] + ' to ' + off[11:19] + '.'
         time_labels = print_time_labels(total_time)
         comment = comment.replace(', ', ',')
@@ -1823,7 +1831,7 @@ if __name__ == '__main__':
             # on tasks.csv
 if __name__ == "__main__":
     #void()
-    if (sys.argv[1] == "test"): minutes_index(sys.argv[2])
+    #if (sys.argv[1] == "test"): minutes_index(sys.argv[2])
     try:
 
         possible_arguments = ['mvim', 'vi', 'test', 'today', 'vacation',
