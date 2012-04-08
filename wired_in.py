@@ -22,10 +22,10 @@ import math
 import textwrap
 
 # These are going to have to be edited for new users.
-folder_path = '/Users/richardlittauer/Github/wired-in/'
-output_file_name = folder_path + 'wyred/oxygen.csv'
-tasks_file = folder_path +  'wyred/tasks.csv'
-shopping_list = folder_path + 'wyred/shopping_list.csv'
+folder_path = '/Users/richardlittauer/Github/wired-in'
+output_file_name = folder_path + '/wyred/oxygen.csv'
+tasks_file = folder_path +  '/wyred/tasks.csv'
+shopping_list = folder_path + '/wyred/shopping_list.csv'
 
 # These change each semester, obviously.
 work_tasks = ["hiwi", "FLST", "PSR", "syntax", "CL4LRL", "stats", "research"]
@@ -73,6 +73,11 @@ def edit(x):
     command = sys.argv[1] + ' ' + path + x
     os.system(command)
     print 'Now executing: ' + command
+
+'''
+The following are the shims used for data conversion or manipulation
+'''
+
 
 # Shim
 def print_time_labels(input_time):
@@ -217,6 +222,28 @@ def number_string(x):
     if (match_o_time != None):
         return str(x)
 
+# Makes a minute index HHMMSS
+def minutes_index(string):
+    string = str(string)
+    if len(string) == 8:
+        output = 0
+        splstr = string.split(':')
+        output = int(splstr[0])*60 + int(splstr[1])
+    if len(string) != 8:
+        output = []
+        string = int(string)
+        hour = string / 60
+        if hour < 10:
+            hour = '0' + str(hour)
+        output.append(str(hour))
+        minute = string % 60
+        if minute < 10:
+            minute = '0' + str(minute)
+        output.append(str(minute))
+        output.append('00')
+        output = ':'.join(output)
+    return output
+
 # NLP for manual date input
 def date_string(x):
     today = datetime.datetime.now()
@@ -298,6 +325,23 @@ def random_navi_animal():
             "yerik", "yomh\xcc'ang", "hi'ang", "zize'"]
     return str(animal[random.randrange(len(animal)-1)])
 
+
+'''
+The following are callable functions
+
+# This function should demand a write if nothing else is or has been going on.
+def void():
+    f = open(output_file_name, 'r+')
+    lineList = f.readlines()
+    final_line = lineList[-1].split(', ')
+    if len(final_line) != 3:
+        print final_line
+    # Need an easy way to make sure that it doesn't just print all of the time
+    # when status() is being called. Maybe after most of the __main__
+    # functions.
+
+'''
+
 # PIS should be field 1, but it isn't. Grevious oversight. v2 will have to
 # change this.
 def PID(PID):
@@ -325,13 +369,6 @@ def PID(PID):
 # the today task, which means there's some room for error in reading due dates
 # if you use the lines then. This isn't currently a problem, but might be
 # eventually.
-
-# Makes a minute index HHMMSS
-def minutes_index(string):
-    output = 0
-    string = string.split(':')
-    output = int(string[0])*60 + int(string[1])
-    return output
 
 def task_division(line):
     line  = line.split(', ')
@@ -403,44 +440,29 @@ def task_division(line):
 
         time_for_task = (time_for_task / days_left) \
                 + time_for_task%days_left
+        line[2] = minutes_index(time_for_task)
 
-        # This converts 183 into 03:03:00
-        tft = []
-        tft_hour = time_for_task / 60
-        if tft_hour < 10:
-            tft_hour = '0' + str(tft_hour)
-        tft_hour = str(tft_hour)
-        tft.append(tft_hour)
-        tft_minute = time_for_task % 60
-        if tft_minute < 10:
-            tft_minute = '0' + str(tft_minute)
-        tft_minute = str(tft_minute)
-        tft.append(tft_minute)
-        tft.append('00')
-        tft = ':'.join(tft)
-        line[2] = tft
         line = ', '.join(line)
         # print line.replace('\n', '')
         return line
 
     if task_type == 'cont':
-        time_for_task = int(line[2][0:2])*60 + int(line[2][3:5])
+        time_for_task = minutes_index(line[2])
         f = open(output_file_name, 'r+')
         lineList = f.readlines()
+        today = str(datetime.datetime.now())[:10]
         for logline in lineList:
             logline = logline.split(', ')
-            if len(logline) == int(7):
-                logPID = logline[6].replace('\n','')
+            if len(logline) == 7:
+                logPID = logline[6]
                 if logPID == PID:
-                    time_done = logline[3].split(':')
-                    time_taken_already = int(time_done[0])*60\
-                            + int(time_done[1])
-                    time_for_task = time_for_task - time_taken_already
-        if time_for_task <= line[2]:
-            today = datetime.datetime.now()
-            line[3] = day_index(str(int(day_index(str(today)[:10]))+1))
-        if time_for_task > line[2]:
-            line[3] = str(datetime.datetime.now())[:10]
+                    if str(today)[:10] == logline[0][:10]:
+                        time_taken_already = minutes_index(logline[3])
+                        time_for_task = time_for_task - time_taken_already
+        if time_for_task < minutes_index(line[2]):
+            line[3] = day_index(str(int(day_index(today))+1))
+        if time_for_task >= minutes_index(line[2]):
+            line[3] = today
         line = ', '.join(line)
         return line
 
@@ -526,75 +548,86 @@ def end():
     from datetime import timedelta
     lineList = f.readlines()
     on = lineList[-1]
-    on_split = on.split(', ')
-    off = datetime.now()
-    print
-    print "---------------------------------End------------------------------------"
-    print 'Mask off!'
-    print 
-
-    project = raw_input('project: ' + on_split[1] + '. ')
-    if project == '':
-        project = on_split[1]
-    if project != '':
-        if project != on_split[1]:
+    testLine = on.split(', ')
+    if len(testLine) != 3:
+        print
+        print '    You are not currently working on a project.'
+        answer = raw_input('    Fence it? y/n ')
+        if answer == 'y':
+            fence()
+        if answer == 'n':
+            print '    Goodbye.'
             print
-            print 'Do you know what you\'re doing?'
-            print
+    if len(testLine) == 3:
+        on_split = on.split(', ')
+        off = datetime.now()
+        print
+        print "---------------------------------End------------------------------------"
+        print 'Mask off!'
+        print 
+
+        project = raw_input('project: ' + on_split[1] + '. ')
+        if project == '':
+            project = on_split[1]
+        if project != '':
+            if project != on_split[1]:
+                print
+                print 'Do you know what you\'re doing?'
+                print
 
 
-    what_time = raw_input('end: now. ')
-    if what_time != '':
+        what_time = raw_input('end: now. ')
+        if what_time != '':
+            try:
+                pattern = re.compile("\d+")
+                match_o = re.match(pattern, what_time)
+                if (match_o != None):
+                    today = datetime.now()
+                    min_change = timedelta(minutes=int(what_time))
+                    time_adjust = today - min_change
+                    print "You have just adjusted time backwards: " + str(off) + " is now " + str(time_adjust) + "."
+                    off = time_adjust
+            except: x = "penguins"
+        off = str(off)
+        FMT = '%H:%M:%S'
+        tdelta = datetime.strptime(off[11:19], FMT) - datetime.strptime(on[11:19], FMT)
+        total_time = str(tdelta)
+        if len(total_time) == 15:
+            total_time = total_time[-7:]
+        if len(total_time) == 16:
+            total_time = total_time[-8:]
+        comment = raw_input('comment: ')
+        comment = comment.replace(', ', ',')
+        if comment == "x":
+            comment = ""
+        if comment == "c":
+            comment = 'class'
+        if comment == 'h':
+            comment = 'homework'
+        PID = raw_input('PID: - ')
+        print
+
+        print 'You were on the surface of Pandora from: ' + on[:19] + ' to ' + off[11:19] + '.'
+        time_labels = print_time_labels(total_time)
         try:
             pattern = re.compile("\d+")
-            match_o = re.match(pattern, what_time)
+            match_o = re.match(pattern, comment)
             if (match_o != None):
-                today = datetime.now()
-                min_change = timedelta(minutes=int(what_time))
-                time_adjust = today - min_change
-                print "You have just adjusted time backwards: " + str(off) + " is now " + str(time_adjust) + "."
-                off = time_adjust
-        except: x = "penguins"
-    off = str(off)
-    FMT = '%H:%M:%S'
-    tdelta = datetime.strptime(off[11:19], FMT) - datetime.strptime(on[11:19], FMT)
-    total_time = str(tdelta)
-    if len(total_time) == 15:
-        total_time = total_time[-7:]
-    if len(total_time) == 16:
-        total_time = total_time[-8:]
-    comment = raw_input('comment: ')
-    comment = comment.replace(', ', ',')
-    if comment == "x":
-        comment = ""
-    if comment == "c":
-        comment = 'class'
-    if comment == 'h':
-        comment = 'homework'
-    PID = raw_input('PID: - ')
-    print
-
-    print 'You were on the surface of Pandora from: ' + on[:19] + ' to ' + off[11:19] + '.'
-    time_labels = print_time_labels(total_time)
-    try:
-        pattern = re.compile("\d+")
-        match_o = re.match(pattern, comment)
-        if (match_o != None):
-                print "You survived for %s, and killed like %s %s." % (time_labels, match_o.group())
-        if (match_o == None):
-                print "You survived for %s." % time_labels
-    except: x = "moose"
-    print
-    print 'Operation ' + project + ' is now terminated. Your activity report readout: '
-    print comment
-    print "------------------------------------------------------------------------"
-    f.write(str(off) + ", ")
-    f.write(total_time + ", ")
-    f.write(project + ", ")
-    f.write(comment.replace("\"", "'"))
-    f.write(', ' + PID)
-    f.write("\n")
-    f.close()
+                    print "You survived for %s, and killed like %s %s." % (time_labels, match_o.group())
+            if (match_o == None):
+                    print "You survived for %s." % time_labels
+        except: x = "moose"
+        print
+        print 'Operation ' + project + ' is now terminated. Your activity report readout: '
+        print comment
+        print "------------------------------------------------------------------------"
+        f.write(str(off) + ", ")
+        f.write(total_time + ", ")
+        f.write(project + ", ")
+        f.write(comment.replace("\"", "'"))
+        f.write(', ' + PID)
+        f.write("\n")
+        f.close()
 
 # Wait, what project am I running now, anyway?
 def status():
@@ -694,6 +727,24 @@ def search():
                         line[5] = line[5].replace("\n", "")
                         print line[0][5:11] + "for " + print_time_labels(line[3]) + ": " + line[5]
                 except: x = "This is a filler."
+        if sys.argv[2] != line[1]:
+            try:
+                if (sys.argv[3] == "all"):
+                    pattern = re.compile(str(sys.argv[2]), re.IGNORECASE)
+                    match_o = re.search(pattern, line[5])
+                    if (match_o != None):
+                        FMT = '%H:%M:%S'
+                        tt = datetime.strptime(line[3], FMT)
+                        total_time = datetime.strptime(str(total_time), FMT) + timedelta(hours=tt.hour,minutes=tt.minute,seconds=tt.second)
+                        if str(total_time)[9] == '2':
+                            days += 1
+                        total_time = str(total_time)[11:]
+                        try:
+                            if (sys.argv[4] == "print"):
+                                line[5] = line[5].replace("\n", "")
+                                print line[0][5:11] + "for " + print_time_labels(line[3]) + ": " + line[5]
+                        except: x = "This is a filler."
+            except: x = "there are no line item matches"
     if days == 1:
         day_string = "day"
     if days != 0:
@@ -1752,6 +1803,8 @@ if __name__ == '__main__':
 # Today is now dependant in some aspects \
             # on tasks.csv
 if __name__ == "__main__":
+    #void()
+    if (sys.argv[1] == "test"): minutes_index(sys.argv[2])
     try:
 
         possible_arguments = ['mvim', 'vi', 'test', 'today', 'vacation',
@@ -1760,10 +1813,15 @@ if __name__ == "__main__":
         'write', 'task', 'PID', 'list', 'buy', 'm', 'v', 'to', 's', 'e', 'b',
         'h', 'y', 'f', 'ta', 'p', 'r', 'w', 'l']
 
+        # Issue tracking
+        #if (sys.argv[1] == "ghi"): 
+        #    import os
+        #    command = 'cd ' + folder_path +' | ghi'
+        #    os.system(command)
+
         # Editing
         if (sys.argv[1] == "mvim") or (sys.argv[1] == "m"): edit(sys.argv[2])
         if (sys.argv[1] == "vi") or (sys.argv[1] == "v"): edit(sys.argv[2])
-        if (sys.argv[1] == "test"): task_division(sys.argv[2])
 
         # Logs
         if (sys.argv[1] == "today") or (sys.argv[1] == "to"): today()
