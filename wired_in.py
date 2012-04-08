@@ -446,23 +446,43 @@ def task_division(line):
         # print line.replace('\n', '')
         return line
 
+    # For continuous tasks that need to be done each day. 
     if task_type == 'cont':
         time_for_task = minutes_index(line[2])
         f = open(output_file_name, 'r+')
         lineList = f.readlines()
         today = str(datetime.datetime.now())[:10]
+
+        # For each normal line, check the PID
         for logline in lineList:
             logline = logline.split(', ')
             if len(logline) == 7:
                 logPID = logline[6]
                 if logPID == PID:
+
+                    # If there was work done today
                     if str(today)[:10] == logline[0][:10]:
+
+                        # Adjust the minutes left to do.
                         time_taken_already = minutes_index(logline[3])
                         time_for_task = time_for_task - time_taken_already
-        if time_for_task < minutes_index(line[2]):
-            line[3] = day_index(str(int(day_index(today))+1))
-        if time_for_task >= minutes_index(line[2]):
-            line[3] = today
+
+        # If it shouldn't be appearing yet
+        if int(day_index(line[3]))-int(line[5]) >= day_index(today):
+
+            # If there are no more minutes to go
+            if time_for_task <= 0:
+                print time_for_task, minutes_index(time_for_task)
+                # Adjust time left
+                line[2] = minutes_index(time_for_task)
+
+                # Day due is tomorrow
+                line[3] = day_index(str(int(day_index(today))+1))
+
+            # If there is still work to do
+            if time_for_task >= minutes_index(line[2]):
+                line[3] = today
+
         line = ', '.join(line)
         return line
 
@@ -485,18 +505,17 @@ def task_division(line):
     '''
 
     if task_type == 'x':
+        # Always another day ahead...
         today =datetime.datetime.now()
         line[3] = day_index(str(int(day_index(str(today)[:10]))+1))
-        # Going to want to fix this so that it goes over month boundaries. 
-
         line = ', '.join(line)
         return line
 
     # Filler should never actually happen anymore - this was a retrofix.
-    if task_type == 'filler':
-        line[0] = '!' + line[0] 
-        line = ', '.join(line)
-        return line
+    #if task_type == 'filler':
+    #    line[0] = '!' + line[0] 
+    #    line = ', '.join(line)
+    #    return line
 
 # How to start a log line. 
 def begin():
