@@ -520,44 +520,51 @@ def task_division(line):
 # How to start a log line. 
 def begin():
     f = open(output_file_name,'a')
+    
     print
     print "Mask on!"
-    print
 
-    project = raw_input('project: ')
+    # Can process this as arguments, too
+    try: project = sys.argv[2]
+    except: project = raw_input('project: ')
 
-    what_time = raw_input('begin: now. ')
-    time_now = datetime.datetime.now()
+    # Same with time
+    try: what_time = str(sys.argv[3])
+    except: what_time = raw_input('begin: now. ')
+
     if what_time != '':
         try:
-            pattern = re.compile("\d+")
-            match_o = re.match(pattern, what_time)
-            if (match_o != None):
-                today = datetime.datetime.now()
-                min_change = datetime.timedelta(minutes=int(what_time))
-                time_adjust = today - min_change
-                print "-----------------------------------------------------------------------"
-                print "You have just adjusted time backwards: " 
-                print str(time_now) + " is now " + str(time_adjust) + "."
-                print "-----------------------------------------------------------------------"
-                time_now = time_adjust
-        except: x = "There should be another option here."
-        try:
-            if what_time == "-l":
+            try:
+                pattern = re.compile("\d+")
+                match_o = re.match(pattern, what_time)
+                if (match_o != None):
+                    what_time = what_time
+            except: 
+                if len(what_time.split(':')) == 2:
+                    time_now = minutes_index(datetime.datetime.now())
+                    what_time = what_time[0]*60 + what_time[1]
+                    what_time = time_now - minutes_index(what_time)
+                    print what_time
+            time_now = datetime.datetime.now()
+            min_change = datetime.timedelta(minutes=int(what_time))
+            time_adjust = time_now - min_change
+            print
+            print "-----------------------------------------------------------------------"
+            print "You have just adjusted time backwards: " 
+            print str(time_now) + " is now " + str(time_adjust) + "."
+            print "-----------------------------------------------------------------------"
+            time_now = time_adjust
+        except:
+            if what_time == "last":
                 f = open(output_file_name, 'r+')
                 lineList = f.readlines()
-                on = lineList[-1]
-                pattern = re.compile("\d\d:\d\d:\d\d.\d+")
-                match_o_time = re.search(pattern, on[27:])
-                if (match_o_time != None):
-                    time_now = str(time_now)[:10] + " " + match_o_time.group(0)
-                    print "-----------------------------------------------------------------------"
-                    print "You have just adjusted your start level from the last known signal, at " + time_now + "."
-                    print "-----------------------------------------------------------------------"
-        except: x = "This is a filler. You are in real time."
+                time_now = lineList[-1].split(', ')[2]
+                print
+                print "-----------------------------------------------------------------------"
+                print "You start when you stopped, at " + time_now + "."
+                print "-----------------------------------------------------------------------"
     print
-    f.write(str(time_now) + ", ")
-    f.write(project + ", ")
+    f.write(str(time_now) + ', ' + project + ', ')
     f.close()
 
 # How to end a logline. 
@@ -628,7 +635,7 @@ def end():
         PID = raw_input('PID: - ')
         print
 
-        print 'You were on the surface of Pandora from: ' + on[:19] + ' to ' + off[11:19] + '.'
+        print 'You were on the surface of Pandora from: ' + on[11:19] + ' to ' + off[11:19] + '.'
         time_labels = print_time_labels(total_time)
         try:
             pattern = re.compile("\d+")
@@ -661,27 +668,37 @@ def status():
     if len(line) != 3:
         f = open(output_file_name, 'r+')
         lineList = f.readlines()
-        on = lineList[-1]
+        on = lineList[-1].replace('\n', '').split(', ')
         # Clean this us using split()
-        try:
-            pattern_time = re.compile("\d\d:\d\d\:\d\d.\d+")
-            match_o_time = re.search(pattern_time, on[29:])
-            if (match_o_time != None):
-                onn = match_o_time.group(0)
-                off = str(datetime.now())
-                FMT = '%H:%M:%S'
-                time_since = datetime.strptime(off[11:19], FMT) - datetime.strptime(onn[:8], FMT)
-                time_since = str(time_since)
-        except: x = "I am a whale"
+        onn = on[2].split(' ')[1].split('.')[0]
+        off = str(datetime.now())
+        FMT = '%H:%M:%S'
+        time_since = datetime.strptime(off[11:19], FMT) - \
+        datetime.strptime(onn, FMT)
+        time_since = str(time_since)
+        time_since = time_since.split(', ')
+        if len(time_since) == 2:
+            if time_since[0] == '-1 day':
+                time_since = time_since[1]
+                print '                   You\'ve crossed the dateline, Moby.'
+                print
+        if len(time_since) == 1:
+            time_since = time_since[0]
         time_labels = print_time_labels(time_since)
-        print "You have not been working for %s." % time_labels
-        print
-        print on
-        on = on.replace('\n', '').split(', ')
-        print "Your last job, %s, lasted %s. Comment: \n%s" % (on[4], print_time_labels(on[3]), on[5])
+        # time_since is actually a clever little hack where -1 day is the
+        # string. It may not work if things are improved. 
         if len(time_since) >= 10:
             print "Good morning. You haven't started working yet today."
-            print "Your last read out was: " + on.replace("\n","")
+            print
+            question = raw_input('Would you like to see what you did yesterday? yn ')
+            if question == "y":
+                yesterday()
+            if question == "n":
+                print
+        if len(time_since) < 10:
+            print "You have not been working for %s." % time_labels
+            print
+        print "Your last job, %s, lasted %s. Comment: \n%s" % (on[4], print_time_labels(on[3]), on[5])
     if len(line) == 3:
         on = line[0]
         last_job = line[1]
@@ -1410,17 +1427,35 @@ def fence():
         print "-------------------------------Fence------------------------------------"
 
         project = raw_input(' project: ')
+
         first_time = raw_input(' from: ')
         if len(first_time) != 5:
             if first_time != "last":
-                print "Military time please."
-                first_time = raw_input(' from (HH:MM): ')
+                conversion = raw_input('Did you mean 0'\
+                        +first_time+'? yn ')
+                if conversion == 'y':
+                    first_time = '0'+first_time
+                if conversion == 'n':
+                    print "Military time please."
+                    first_time = raw_input(' from (HH:MM): ')
+
         second_time = raw_input(' to: ')
-        if second_time == "now":
-            now = datetime.now()
-            second_time = str(now)[11:16]
+        if len(second_time) != 5:
+            if second_time != 'now':
+                conversion = raw_input('Did you mean 0'\
+                        +second_time+'? yn ')
+                if conversion == 'y':
+                    second_time = '0'+second_time
+                if conversion == 'n':
+                    print "Military time please."
+                    second_time = raw_input(' from (HH:MM): ')
+            if second_time == "now":
+                now = datetime.now()
+                second_time = str(now)[11:16]
+
         print ' Comment can be -x or -c.'
         comment = raw_input(' comment: ')
+
         PID = raw_input(' PID: - ')
         if PID == 'list':
             os.system('wyr today tasks all')
@@ -1637,7 +1672,6 @@ def task_write():
 
             days_before = raw_input('days to work on: ')
 
-            print
             print '(Task Types: hard  soft  cont  dead)'
             task_type = raw_input('type: ')
 
@@ -1839,12 +1873,6 @@ if __name__ == "__main__":
         'yesterday', 'topics', 'week', 'fence', 'tasks', 'projects', 'random',
         'write', 'task', 'PID', 'list', 'buy', 'm', 'v', 'to', 's', 'e', 'b',
         'h', 'y', 'f', 'ta', 'p', 'r', 'w', 'l']
-
-        # Issue tracking
-        #if (sys.argv[1] == "ghi"): 
-        #    import os
-        #    command = 'cd ' + folder_path +' | ghi'
-        #    os.system(command)
 
         # Editing
         if (sys.argv[1] == "mvim") or (sys.argv[1] == "m"): edit(sys.argv[2])
