@@ -28,7 +28,8 @@ tasks_file = folder_path +  '/wyred/tasks.csv'
 shopping_list = folder_path + '/wyred/shopping_list.csv'
 
 # These change each semester, obviously.
-work_tasks = ["hiwi", "FLST", "PSR", "syntax", "CL4LRL", "stats", "research"]
+work_tasks = ["hiwi", "FLST", "PSR", "syntax", \
+        "CL4LRL", "stats", "research", "EMA", "SE"]
 
 # The help desk.
 def help():
@@ -281,11 +282,16 @@ def date_string(x):
             months = ['no month', 'January', 'February', 'March', 'April', \
                     'May',  'June', 'July', 'August', 'September', 'October',\
                     'November', 'December']
-            ## Ignore case needs to be done by regex here. 
+            ## Ignore case needs to be done by regex here.
+            #for y in months:
+            #    print x[0], y
+            #    ignorecase = re.search(x[0], y, re.IGNORECASE)
+            #    if ignorecase != None: 
+            #        print what
             if x[0] in months:
-                month = months.index(x[0])
-                if month < 10:
-                    month = '0' + str(month)
+                month = x[0]
+                if months.index(month) < 10:
+                    month = '0' + str(months.index(month))
             pattern = re.compile("\d\d")
             match_p = re.match(pattern, x[1])
             if (match_p != None):
@@ -531,6 +537,8 @@ def begin():
     # Same with time
     try: what_time = str(sys.argv[3])
     except: what_time = raw_input('begin: now. ')
+
+    if what_time == '': time_now = datetime.datetime.now()
 
     if what_time != '':
         try:
@@ -1687,6 +1695,9 @@ def task_write():
 
     date = date_string(date)
 
+    # Some weird issue with assigning April?
+    # print date
+
     weight = raw_input('weight: ')
 
     PID = 0
@@ -1867,7 +1878,6 @@ if __name__ == "__main__":
     #void()
     #if (sys.argv[1] == "test"): minutes_index(sys.argv[2])
     try:
-
         possible_arguments = ['mvim', 'vi', 'test', 'today', 'vacation',
         'search', 'cease', 'status', 'end', 'begin', 'being', 'start', 'help',
         'yesterday', 'topics', 'week', 'fence', 'tasks', 'projects', 'random',
@@ -1908,6 +1918,5 @@ if __name__ == "__main__":
         if sys.argv[1] not in possible_arguments:
             print '\n You were just mauled by a ' + random_navi_animal() + '.\n '
     except: status()
-
 
 # Today's my birthday, after all. - Jake Sully
