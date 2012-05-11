@@ -402,35 +402,20 @@ def task_division(line,oxygenList):
 
     ## What would be good is an output format that isn't a day string.
     task_types = [\
-            'dead', # Day of only.
             'hard', # Days before, doesn't divide.
             'soft', # Days before, divides time.
-            'dhard', # Hard with hard deadline
             'dsoft', # Soft with hard deadline
             'dcont', # Cont with hard deadline and not as_well placement
             'cont', # Repeats from start date for x days.
+            'over', # When it's cont but it should rollover (per week)
+            'dover', # dcont + over
             'x' ] # Doesn't repeat or show unless asked
 
     if task_type not in task_types:
         print "Something is wrong with your formatting tasks."
         print "Look at PID: " + PID
 
-    if task_type == 'dead':
-        line = ', '.join(line)
-        return line
-
     if task_type == 'hard':
-        # Currently, the way it is set up is on hard - shows the full time, days
-        # before. 
-
-        if time_for_task == 0: line[4] = '0'
-
-        line = ', '.join(line)
-        return line
-        # start_appearing = int(day_index(date_due)) - int(days_to_do)
-        # date_due = day_index(start_appearing)
-
-    if task_type == 'dhard':
         # Currently, the way it is set up is on hard - shows the full time, days
         # before. 
 
@@ -478,7 +463,6 @@ def task_division(line,oxygenList):
         if time_for_task == 0: line[4] = '0'
 
         line = ', '.join(line)
-        # print line.replace('\n', '')
 
         return line
 
@@ -605,23 +589,96 @@ def task_division(line,oxygenList):
 
         line = ', '.join(line)
         return line
-    '''
-    # For repeating tasks (cont) that differ in time too much to calculate
-    if task_type == 'obj':
-        # Has it been logged yet?
+
+    # For continuous tasks that need to be done each day. 
+    if task_type == 'over':
+        time_for_task = minutes_index(line[2])
         f = open(output_file_name, 'r+')
         lineList = f.readlines()
+        today = str(datetime.datetime.now())[:10]
+
+        time_taken_already = 0
+
+        # For each normal line, check the PID
         for logline in lineList:
             logline = logline.split(', ')
-            if len(logline) == int(7):
-                logPID = logline[6].replace('\n','')
+            if len(logline) == 7:
+                logPID = logline[6]
                 if logPID == PID:
-                    # If so, then make the next day tomorrow. 
-                    today = datetime.datetime.now()
-                    line[3] = day_index(str(int(day_index(str(today)[:10]))+1))
+
+                    # If there was work done in the past week
+                    if int(day_index(today)) - int(day_index(logline[0])) <= 7:
+                        time_for_task += minutes_index(logline[3])
+
+        # Adjust the minutes left to do if there's been rollover.
+        if time_for_task - (time_taken_already/7) <= time_for_task:
+            time_for_task = time_for_task - (time_taken_already/7)
+
+
+        # If it shouldn't be appearing yet
+        if int(day_index(line[3]))-int(line[5]) >= day_index(today):
+
+            # If there are no more minutes to go
+            if time_for_task <= 0:
+                print time_for_task, minutes_index(time_for_task)
+                # Adjust time left
+                line[2] = minutes_index(time_for_task)
+
+                # Day due is tomorrow
+                line[3] = day_index(str(int(day_index(today))+1))
+
+            # If there is still work to do
+            if time_for_task >= minutes_index(line[2]):
+                line[3] = today
+
+        if time_for_task == 0: line[4] = '0'
+
         line = ', '.join(line)
         return line
-    '''
+
+    if task_type == 'dover':
+        time_for_task = minutes_index(line[2])
+        f = open(output_file_name, 'r+')
+        lineList = f.readlines()
+        today = str(datetime.datetime.now())[:10]
+
+        time_taken_already = 0
+
+        # For each normal line, check the PID
+        for logline in lineList:
+            logline = logline.split(', ')
+            if len(logline) == 7:
+                logPID = logline[6]
+                if logPID == PID:
+
+                    # If there was work done in the past week
+                    if int(day_index(today)) - int(day_index(logline[0])) <= 7:
+                        time_taken_already += minutes_index(logline[3])
+
+        # Adjust the minutes left to do if there's been rollover.
+        if time_for_task - (time_taken_already/7) <= time_for_task:
+            time_for_task = time_for_task - (time_taken_already/7)
+
+        # If it shouldn't be appearing yet
+        if int(day_index(line[3]))-int(line[5]) >= day_index(today):
+
+            # If there are no more minutes to go
+            if time_for_task <= 0:
+                print time_for_task, minutes_index(time_for_task)
+                # Adjust time left
+                line[2] = minutes_index(time_for_task)
+
+                # Day due is tomorrow
+                line[3] = day_index(str(int(day_index(today))+1))
+
+            # If there is still work to do
+            if time_for_task >= minutes_index(line[2]):
+                line[3] = today
+
+        if time_for_task == 0: line[4] = '0'
+
+        line = ', '.join(line)
+        return line
 
     if task_type == 'x':
         # Always another day ahead...
@@ -786,6 +843,8 @@ def end():
             total_time = total_time[-8:]
         if len(total_time) == 15:
             total_time = '0' + total_time[-7:]
+        if len(total_time) == 7:
+            total_time = '0' + total_time
         comment = raw_input('comment: ')
         comment = comment.replace(', ', ',')
         if comment == "x":
@@ -1195,7 +1254,7 @@ def today():
                         total_time_alt = str(tdelta)
                     specific_job = sys.argv[2][1:]
                     specific_job_catch = "except"
-            except: penguins = "penguins"
+            except: print 'problem with - statement' 
 
             try:
                 if sys.argv[2][0] != "-":
@@ -1208,7 +1267,7 @@ def today():
                         total_time_alt = str(total_time_alt)[11:]
                         specific_job = line[1]
                         specific_job_catch = "only"
-            except: specific_job = "essential work"
+            except: print 'problem with - except option'
 
     productivity_measure =(float(total_time[:2])*60+ \
             float(total_time[3:5]))/500*100
@@ -1236,7 +1295,7 @@ def today():
     try:
         if sys.argv[2] == "tasks":
             tasks()
-    except: jesus = "dead"
+    except: print 'Tasks broke.'
     print 
     print "----------------------------------"
     for job in done_jobs:
@@ -1313,8 +1372,9 @@ def tasks():
                 if line[2] != '00:00:00':
                     # This basically says that all conts go into to do later
                     # lists. May not be the best idea in the long run. We're
-                    # going to have to see. 
-                    if line[6] != 'cont':
+                    # going to have to see.
+                    ignore = ['cont', 'over']
+                    if line[6] not in ignore:
                         to_do_today.append(line)
                     else:
                         to_do_today_as_well.append(line)
@@ -1323,7 +1383,8 @@ def tasks():
             # Or if it is due tomorrow but should be done today.
             elif (int(day_index(line[3]))-int(line[5])+1) <= \
             today_index:
-                if line[6] == 'dcont':
+                ignore = ['dcont', 'dover']
+                if line[6] in ignore:
                     to_do_today.append(line)
                 else:
                     to_do_today_as_well.append(line)
@@ -1413,10 +1474,10 @@ def tasks():
                                     print_time_labels(line[2]))
                         if print_time_labels(line[2]) == "a while":
                             print "%s\t %s." % (line[0], line[1])
-        except: blah = 'blah'
+        except: penguins = 'penguins' #print 'Problem with all or x'
 
     # Nonsense is good.
-    except: jesus = "is he dead?"
+    except: print 'General problem with tasks'
 
     print
     # Prints the total time left given the tasks to do.
@@ -1765,13 +1826,13 @@ def task_write():
 
             days_before = raw_input('days to work on: ')
 
-            print '(Task Types: hard  soft  cont  dead)'
+            print '(Task Types: hard  soft  cont (d--))'
             task_type = raw_input('type: ')
 
     if date == 'today':
 
-        task_type = raw_input('type: dead. ')
-        if task_type == '': task_type = 'dead'
+        task_type = raw_input('type: hard. ')
+        if task_type == '': task_type = 'hard'
         days_before = '1'
 
     if date == 'x':
@@ -2000,46 +2061,46 @@ if __name__ == '__main__':
 if __name__ == "__main__":
     #void()
     #if (sys.argv[1] == "test"): minutes_index(sys.argv[2])
-    try:
-        possible_arguments = ['mvim', 'vi', 'test', 'today', 
-        'search', 'cease', 'status', 'end', 'begin', 'being', 'start', 'help',
-        'yesterday', 'topics', 'week', 'fence', 'tasks', 'projects', 'random',
-        'write', 'task', 'PID', 'list', 'buy', 'm', 'v', 'to', 's', 'e', 'b',
-        'h', 'y', 'f', 'ta', 'p', 'r', 'w', 'l', 'unify']
+    #try:
+    possible_arguments = ['mvim', 'vi', 'test', 'today', 
+    'search', 'cease', 'status', 'end', 'begin', 'being', 'start', 'help',
+    'yesterday', 'topics', 'week', 'fence', 'tasks', 'projects', 'random',
+    'write', 'task', 'PID', 'list', 'buy', 'm', 'v', 'to', 's', 'e', 'b',
+    'h', 'y', 'f', 'ta', 'p', 'r', 'w', 'l', 'unify']
 
-        # Editing
-        if (sys.argv[1] == "mvim") or (sys.argv[1] == "m"): edit(sys.argv[2])
-        if (sys.argv[1] == "vi") or (sys.argv[1] == "v"): edit(sys.argv[2])
+    # Editing
+    if (sys.argv[1] == "mvim") or (sys.argv[1] == "m"): edit(sys.argv[2])
+    if (sys.argv[1] == "vi") or (sys.argv[1] == "v"): edit(sys.argv[2])
 
-        # Logs
-        if (sys.argv[1] == "today") or (sys.argv[1] == "to"): today()
-        if (sys.argv[1] == "search"): search()
-        if (sys.argv[1] == "cease"): cease()
-        if (sys.argv[1] == "status") or (sys.argv[1] == "s"): status()
-        if (sys.argv[1] == "end") or (sys.argv[1] == "e"): end()
-        if (sys.argv[1] == "begin") or (sys.argv[1] == "b"): begin()
-        if (sys.argv[1] == "start"): begin()
-        if (sys.argv[1] == "help") or (sys.argv[1] == "h"): help()
-        if (sys.argv[1] == "yesterday") or (sys.argv[1] == "y"): yesterday()
-        if (sys.argv[1] == "topics"): topics()
-        if (sys.argv[1] == "week"): this_week()
-        if (sys.argv[1] == "fence") or (sys.argv[1] == "f"): fence()
+    # Logs
+    if (sys.argv[1] == "today") or (sys.argv[1] == "to"): today()
+    if (sys.argv[1] == "search"): search()
+    if (sys.argv[1] == "cease"): cease()
+    if (sys.argv[1] == "status") or (sys.argv[1] == "s"): status()
+    if (sys.argv[1] == "end") or (sys.argv[1] == "e"): end()
+    if (sys.argv[1] == "begin") or (sys.argv[1] == "b"): begin()
+    if (sys.argv[1] == "start"): begin()
+    if (sys.argv[1] == "help") or (sys.argv[1] == "h"): help()
+    if (sys.argv[1] == "yesterday") or (sys.argv[1] == "y"): yesterday()
+    if (sys.argv[1] == "topics"): topics()
+    if (sys.argv[1] == "week"): this_week()
+    if (sys.argv[1] == "fence") or (sys.argv[1] == "f"): fence()
 
-        # Tasks
-        if (sys.argv[1] == "tasks") or (sys.argv[1] == "ta"): tasks()
-        if (sys.argv[1] == "projects") or (sys.argv[1] == "p"): projects()
-        if (sys.argv[1] == "random") or (sys.argv[1] == "r"): random_task()
-        if (sys.argv[1] == "write") or (sys.argv[1] == "w"): task_write()
-        if (sys.argv[1] == "task"): todo()
-        if (sys.argv[1] == "PID"): PID(sys.argv[2])
-        if (sys.argv[1] == "unify"): unify()
+    # Tasks
+    if (sys.argv[1] == "tasks") or (sys.argv[1] == "ta"): tasks()
+    if (sys.argv[1] == "projects") or (sys.argv[1] == "p"): projects()
+    if (sys.argv[1] == "random") or (sys.argv[1] == "r"): random_task()
+    if (sys.argv[1] == "write") or (sys.argv[1] == "w"): task_write()
+    if (sys.argv[1] == "task"): todo()
+    if (sys.argv[1] == "PID"): PID(sys.argv[2])
+    if (sys.argv[1] == "unify"): unify()
 
-        # Shopping list
-        if (sys.argv[1] == 'list') or (sys.argv[1] == "l"): view_list()
-        if (sys.argv[1] == 'buy'): buy()
+    # Shopping list
+    if (sys.argv[1] == 'list') or (sys.argv[1] == "l"): view_list()
+    if (sys.argv[1] == 'buy'): buy()
 
-        if sys.argv[1] not in possible_arguments:
-            print '\n You were just mauled by a ' + random_navi_animal() + '.\n '
-    except: status()
+    if sys.argv[1] not in possible_arguments:
+        print '\n You were just mauled by a ' + random_navi_animal() + '.\n '
+#except: status()
 
 # Today's my birthday, after all. - Jake Sully
