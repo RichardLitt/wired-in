@@ -7,6 +7,8 @@ Wired In: Time tracker and Task manager
 CC-Share Alike 2012 © Richard Littauer
 https://github.com/RichardLitt/wired-in
 
+All issues are tracked with ghi from the terminal (for future reference.)
+
 """
 
 # Let's fedex in some packages!
@@ -23,11 +25,12 @@ folder_path = '/Users/richardlittauer/Github/wired-in'
 output_file_name = folder_path + '/wyred/oxygen.csv'
 tasks_file = folder_path +  '/wyred/tasks.csv'
 shopping_list = folder_path + '/wyred/shopping_list.csv'
+issues_list = folder_path + '/wyred/ghi'
 
 # These change each semester, obviously.
 work_tasks = ["hiwi", 'conf', 'research', 'rep', 'german', 'work', #Non-denominational
         "FLST", "PSR", "syntax", 'CL4LRL', 'stats', #Wintersommester
-        "SE", 'bracoli', 'coli', 'sem'] #Sommersemester
+        "SE", 'bracoli', 'coli', 'sem', 'LT'] #Sommersemester
 
 # The help desk.
 def help():
@@ -823,16 +826,27 @@ def end():
 
         what_time = raw_input('end: now. ')
         if what_time != '':
-            try:
-                pattern = re.compile("\d+")
-                match_o = re.match(pattern, what_time)
-                if (match_o != None):
+            if len(what_time.split(' ')) == 2:
+                what_time = what_time.split(' ')
+                if what_time[1] == 'yesterday':
                     today = datetime.now()
-                    min_change = timedelta(minutes=int(what_time))
-                    time_adjust = today - min_change
-                    print "You have just adjusted time backwards: " + str(off) + " is now " + str(time_adjust) + "."
-                    off = time_adjust
-            except: x = "penguins"
+                    off = what_time[0] + ':00.000000'
+                    off = on[0:11] + off
+                    print "You have just adjusted time backwards: " + \
+                    str(today) + " is now " + str(off) + "."
+                else: print 'I do not understand that word.'
+            elif len(what_time.split(':')) == 2:
+                today = datetime.now()
+                off = what_time + ':00.000000'
+                off = str(today)[0:11] + off
+                print "You have just adjusted time backwards: " + str(today) \
+                + "is now " + str(off) + "."
+            else:
+                today = datetime.now()
+                min_change = timedelta(minutes=int(what_time))
+                time_adjust = today - min_change
+                print "You have just adjusted time backwards: " + str(off) + " is now " + str(time_adjust) + "."
+                off = time_adjust
         off = str(off)
         FMT = '%H:%M:%S'
         tdelta = datetime.strptime(off[11:19], FMT) - datetime.strptime(on[11:19], FMT)
@@ -1047,28 +1061,41 @@ def status():
     print 
     print "---------------------------------Status---------------------------------"
     line = lineList[-1].split(', ')
+
+    # If there is no job currently going on
     if len(line) != 3:
         f = open(output_file_name, 'r+')
         lineList = f.readlines()
+
+        # Find the last job and get the information for it
         on = lineList[-1].replace('\n', '').split(', ')
-        # Clean this us using split()
         onn = on[2].split(' ')[1].split('.')[0]
+
+        # Find out how long it has been since then
         off = str(datetime.now())
         FMT = '%H:%M:%S'
         time_since = datetime.strptime(off[11:19], FMT) - \
         datetime.strptime(onn, FMT)
+
+        # Split that up to deal with printing it
         time_since = str(time_since)
         time_since = time_since.split(', ')
+
+        # If the last job was actually yesterday
         if len(time_since) == 2:
             if time_since[0] == '-1 day':
                 time_since = time_since[1]
                 print '                   You\'ve crossed the dateline, Moby.'
                 print
+
+        # Otherwise
         if len(time_since) == 1:
             time_since = time_since[0]
         time_labels = print_time_labels(time_since)
+
         # time_since is actually a clever little hack where -1 day is the
         # string. It may not work if things are improved. 
+        # In fact, I don't even think this is working now. 
         if len(time_since) >= 10:
             print "Good morning. You haven't started working yet today."
             print
@@ -1077,18 +1104,42 @@ def status():
                 yesterday()
             if question == "n":
                 print
+
+        # Tell me how long I haven't been working
         if len(time_since) < 10:
             print "You have not been working for %s." % time_labels
             print
         print "Your last job, %s, lasted %s. Comment: \n%s" % (on[4], print_time_labels(on[3]), on[5])
+
+    # If there is a job currently under way
     if len(line) == 3:
         on = line[0]
         last_job = line[1]
         off = str(datetime.now())
-        FMT = '%H:%M:%S'
-        tdelta = datetime.strptime(off[11:19], FMT) - datetime.strptime(on[11:19], FMT)
-        print 'You are currently on project %s in Pandora.' % last_job
-        print 'Time alive: %s.' % print_time_labels(str(tdelta))
+
+        # If you forgot to end the task yesterday or the days before
+        # This won't work for month overflow
+        if on[:10] != off[:10]:
+            # Figure out how many days late
+            days_overflow = int(off[:10].split('-')[2]) - \
+            int(on[:10].split('-')[2])
+            # NLP for the day string
+            day_string = 'day'
+            if days_overflow >= 2:
+                day_string = 'days'
+            FMT = '%H:%M:%S'
+            tdelta = datetime.strptime(off[11:19], FMT) - datetime.strptime(on[11:19], FMT)
+            # Print it out properly
+            print 'You are currently on project %s in Pandora.' % last_job
+            print 'Time alive: %s %s and %s.' % (days_overflow, \
+                    day_string, print_time_labels(str(tdelta)))
+
+        # If it is just a normal overflow, on the same day
+        else:
+            FMT = '%H:%M:%S'
+            tdelta = datetime.strptime(off[11:19], FMT) - datetime.strptime(on[11:19], FMT)
+            print 'You are currently on project %s in Pandora.' % last_job
+            print 'Time alive: %s.' % print_time_labels(str(tdelta))
     print "------------------------------------------------------------------------"
     print ""
     f.close()
@@ -1378,8 +1429,11 @@ def tasks():
                         to_do_today.append(line)
                     else:
                         to_do_today_as_well.append(line)
-                if line[2] == '00:00:00':
-                    to_do_today_as_well.append(line)
+                # Commenting this out because it doesn't help to see what you
+                # do not need to do. Can uncomment later if needed.
+
+                #if line[2] == '00:00:00':
+                #    to_do_today_as_well.append(line)
             # Or if it is due tomorrow but should be done today.
             elif (int(day_index(line[3]))-int(line[5])+1) <= \
             today_index:
@@ -1845,7 +1899,9 @@ def task_write():
     # Some weird issue with assigning April?
     # print date
 
-    weight = raw_input('weight: ')
+    weight = raw_input('weight: 1 ')
+    if weight == '':
+        weight = '1'
 
     PID = 0
     for line in lineList:
@@ -2035,6 +2091,22 @@ def buy():
     print
     f.close()
 
+def ghi():
+    import subprocess
+    cmd = [ 'ghi' ]
+    output = subprocess.Popen(cmd, stdout=subprocess.PIPE).communicate()[0]
+    test = output.split('\n')
+    if len(test) <= 2:
+        print 'There is currently no internet connection.'
+        print 
+        f = open(issues_list, 'r+')
+        f = f.read()
+        print f
+    else:
+        f = open(issues_list, 'w+')
+        f.write(output)
+        print output
+
 '''
 The final argument functions.
 '''
@@ -2061,46 +2133,49 @@ if __name__ == '__main__':
 if __name__ == "__main__":
     #void()
     #if (sys.argv[1] == "test"): minutes_index(sys.argv[2])
-    #try:
-    possible_arguments = ['mvim', 'vi', 'test', 'today', 
-    'search', 'cease', 'status', 'end', 'begin', 'being', 'start', 'help',
-    'yesterday', 'topics', 'week', 'fence', 'tasks', 'projects', 'random',
-    'write', 'task', 'PID', 'list', 'buy', 'm', 'v', 'to', 's', 'e', 'b',
-    'h', 'y', 'f', 'ta', 'p', 'r', 'w', 'l', 'unify']
+    try:
+        possible_arguments = ['mvim', 'vi', 'test', 'today', 
+        'search', 'cease', 'status', 'end', 'begin', 'being', 'start', 'help',
+        'yesterday', 'topics', 'week', 'fence', 'tasks', 'projects', 'random',
+        'write', 'task', 'PID', 'list', 'buy', 'm', 'v', 'to', 's', 'e', 'b',
+        'h', 'y', 'f', 'ta', 'p', 'r', 'w', 'l', 'unify', 'ghi']
 
-    # Editing
-    if (sys.argv[1] == "mvim") or (sys.argv[1] == "m"): edit(sys.argv[2])
-    if (sys.argv[1] == "vi") or (sys.argv[1] == "v"): edit(sys.argv[2])
+        # Editing
+        if (sys.argv[1] == "mvim") or (sys.argv[1] == "m"): edit(sys.argv[2])
+        if (sys.argv[1] == "vi") or (sys.argv[1] == "v"): edit(sys.argv[2])
 
-    # Logs
-    if (sys.argv[1] == "today") or (sys.argv[1] == "to"): today()
-    if (sys.argv[1] == "search"): search()
-    if (sys.argv[1] == "cease"): cease()
-    if (sys.argv[1] == "status") or (sys.argv[1] == "s"): status()
-    if (sys.argv[1] == "end") or (sys.argv[1] == "e"): end()
-    if (sys.argv[1] == "begin") or (sys.argv[1] == "b"): begin()
-    if (sys.argv[1] == "start"): begin()
-    if (sys.argv[1] == "help") or (sys.argv[1] == "h"): help()
-    if (sys.argv[1] == "yesterday") or (sys.argv[1] == "y"): yesterday()
-    if (sys.argv[1] == "topics"): topics()
-    if (sys.argv[1] == "week"): this_week()
-    if (sys.argv[1] == "fence") or (sys.argv[1] == "f"): fence()
+        # Logs
+        if (sys.argv[1] == "today") or (sys.argv[1] == "to"): today()
+        if (sys.argv[1] == "search"): search()
+        if (sys.argv[1] == "cease"): cease()
+        if (sys.argv[1] == "status") or (sys.argv[1] == "s"): status()
+        if (sys.argv[1] == "end") or (sys.argv[1] == "e"): end()
+        if (sys.argv[1] == "begin") or (sys.argv[1] == "b"): begin()
+        if (sys.argv[1] == "start"): begin()
+        if (sys.argv[1] == "help") or (sys.argv[1] == "h"): help()
+        if (sys.argv[1] == "yesterday") or (sys.argv[1] == "y"): yesterday()
+        if (sys.argv[1] == "topics"): topics()
+        if (sys.argv[1] == "week"): this_week()
+        if (sys.argv[1] == "fence") or (sys.argv[1] == "f"): fence()
 
-    # Tasks
-    if (sys.argv[1] == "tasks") or (sys.argv[1] == "ta"): tasks()
-    if (sys.argv[1] == "projects") or (sys.argv[1] == "p"): projects()
-    if (sys.argv[1] == "random") or (sys.argv[1] == "r"): random_task()
-    if (sys.argv[1] == "write") or (sys.argv[1] == "w"): task_write()
-    if (sys.argv[1] == "task"): todo()
-    if (sys.argv[1] == "PID"): PID(sys.argv[2])
-    if (sys.argv[1] == "unify"): unify()
+        # Tasks
+        if (sys.argv[1] == "tasks") or (sys.argv[1] == "ta"): tasks()
+        if (sys.argv[1] == "projects") or (sys.argv[1] == "p"): projects()
+        if (sys.argv[1] == "random") or (sys.argv[1] == "r"): random_task()
+        if (sys.argv[1] == "write") or (sys.argv[1] == "w"): task_write()
+        if (sys.argv[1] == "task"): todo()
+        if (sys.argv[1] == "PID"): PID(sys.argv[2])
+        if (sys.argv[1] == "unify"): unify()
 
-    # Shopping list
-    if (sys.argv[1] == 'list') or (sys.argv[1] == "l"): view_list()
-    if (sys.argv[1] == 'buy'): buy()
+        # Shopping list
+        if (sys.argv[1] == 'list') or (sys.argv[1] == "l"): view_list()
+        if (sys.argv[1] == 'buy'): buy()
 
-    if sys.argv[1] not in possible_arguments:
-        print '\n You were just mauled by a ' + random_navi_animal() + '.\n '
-#except: status()
+        # Github issue tracker
+        if (sys.argv[1] == 'ghi'): ghi()
+
+        if sys.argv[1] not in possible_arguments:
+            print '\n You were just mauled by a ' + random_navi_animal() + '.\n '
+    except: status()
 
 # Today's my birthday, after all. - Jake Sully
