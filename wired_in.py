@@ -30,7 +30,7 @@ issues_list = folder_path + '/wyred/ghi'
 # These change each semester, obviously.
 work_tasks = ["hiwi", 'conf', 'research', 'rep', 'german', 'work', #Non-denominational
         "FLST", "PSR", "syntax", 'CL4LRL', 'stats', #Wintersommester
-        "SE", 'bracoli', 'coli', 'sem', 'LT'] #Sommersemester
+        "SE", 'bracoli', 'coli', 'sem', 'LT', 'disc'] #Sommersemester
 
 # The help desk.
 def help():
@@ -228,6 +228,10 @@ def number_string(x):
 # Makes a minute index HHMMSS
 def minutes_index(string):
     string = str(string)
+    if len(string) == 7:
+        string = '0' + string
+    if len(string) == 5:
+        string = string + ':00'
     if len(string) == 8:
         output = 0
         splstr = string.split(':')
@@ -609,8 +613,8 @@ def task_division(line,oxygenList):
                 logPID = logline[6]
                 if logPID == PID:
 
-                    # If there was work done in the past week
-                    if int(day_index(today)) - int(day_index(logline[0])) <= 7:
+                    # If there was work done in the past three days
+                    if int(day_index(today)) - int(day_index(logline[0])) <= 3:
                         time_for_task += minutes_index(logline[3])
 
         # Adjust the minutes left to do if there's been rollover.
@@ -654,8 +658,8 @@ def task_division(line,oxygenList):
                 logPID = logline[6]
                 if logPID == PID:
 
-                    # If there was work done in the past week
-                    if int(day_index(today)) - int(day_index(logline[0])) <= 7:
+                    # If there was work done in the past three days
+                    if int(day_index(today)) - int(day_index(logline[0])) <= 3:
                         time_taken_already += minutes_index(logline[3])
 
         # Adjust the minutes left to do if there's been rollover.
@@ -893,7 +897,7 @@ def end():
                     print "You survived for %s, and killed like %s %s." % (time_labels, match_o.group())
             if (match_o == None):
                     print "You survived for %s." % time_labels
-        except: x = "moose"
+        except: pass
         print
         print 'Operation ' + project + ' is now terminated. Your activity report readout: '
         print comment
@@ -1035,7 +1039,7 @@ def fence():
                     (time_labels, match_o.group(), random_navi_animal())
             if (match_o == None):
                     print "You survived for %s." % time_labels
-        except: x = "moose"
+        except: pass
         
         print 'Operation ' + project + ' is now terminated.'
         print "------------------------------------------------------------------------"
@@ -1197,7 +1201,7 @@ def search():
                     if (sys.argv[3] == "print"):
                         line[5] = line[5].replace("\n", "")
                         print line[0][5:11] + "for " + print_time_labels(line[3]) + ": " + line[5]
-                except: x = "This is a filler."
+                except: pass
         if sys.argv[2] != line[1]:
             try:
                 if (sys.argv[3] == "all"):
@@ -1214,8 +1218,8 @@ def search():
                             if (sys.argv[4] == "print"):
                                 line[5] = line[5].replace("\n", "")
                                 print line[0][5:11] + "for " + print_time_labels(line[3]) + ": " + line[5]
-                        except: x = "This is a filler."
-            except: x = "there are no line item matches"
+                        except: pass
+            except: pass
     if days == 1:
         day_string = "day"
     if days != 0:
@@ -1333,7 +1337,7 @@ def today():
             time_left = 500-(float(total_time[:2])*60+float(total_time[3:5]))
             time_left_fmt = str(int((time_left-time_left%60)/60)) + ":" + str(int(time_left%60)) + ":00"
             print "You only have %s left to go!" % print_time_labels(time_left_fmt)
-    except: daw = "d'awwwww"
+    except: pass
 
     if specific_job_catch == "except":
         time_labels = print_time_labels(total_time_alt)
@@ -1386,7 +1390,7 @@ def tasks():
 
             # Ideally, this shouldn't neet to happen, but that's dependant on
             # only logging tasks to do.
-            if len(log) == 6: skip = "no PID"
+            if len(log) == 6: pass
             if len(log) == 7:
                 if log[6] == line[7]:
                     if log[0][:10] == str(today)[:10]:
@@ -1474,8 +1478,8 @@ def tasks():
             if date[0] == '0': date = date[1:]
             line[1] = line[1] + ' (' + date + ')'
 
-    # Sorts accoding to weight, and then alphabeticallyw
-    from operator import itemgetter, attrgetter
+    # Sorts accoding to weight, and then alphabetically
+    from operator import itemgetter
     to_do_today = sorted(to_do_today, key=itemgetter(2), reverse=True)
     to_do_today = sorted(to_do_today, key=itemgetter(4), reverse=True)
 
@@ -1528,10 +1532,25 @@ def tasks():
                                     print_time_labels(line[2]))
                         if print_time_labels(line[2]) == "a while":
                             print "%s\t %s." % (line[0], line[1])
-        except: penguins = 'penguins' #print 'Problem with all or x'
+        except: pass
 
-    # Nonsense is good.
-    except: print 'General problem with tasks'
+    except: pass
+
+    # This should subtract the time from what you're doing from the total, 
+    # based on seeing if the topic is in the tasks to do and is currently going
+    # on.
+
+    # This will run over and then have to be cut back if you go over. 
+    if log[1] in projects:
+        from datetime import datetime
+        on = log[0]
+        off = str(datetime.now())
+        FMT = '%H:%M:%S'
+        tdelta = datetime.strptime(off[11:19], FMT) - datetime.strptime(on[11:19], FMT)
+        #on = log.replace(", ", ". Your current Operation: ").replace(",", ".")
+        worked = str(tdelta)
+        time_left_today = minutes_index(time_left_today) - minutes_index(worked)
+        time_left_today = minutes_index(time_left_today)
 
     print
     # Prints the total time left given the tasks to do.
@@ -1637,7 +1656,7 @@ def this_week():
                             if str(logged_totality)[9] == '2':
                                 lt_days += 1
                             logged_totality = str(logged_totality)[11:]
-                    except: exams = "are coming"
+                    except: pass
                     if line[1] in work_tasks:
                         tt = datetime.strptime(worked, FMT)
                         total_time = datetime.strptime(str(total_time), FMT) + timedelta(hours=tt.hour,minutes=tt.minute,seconds=tt.second)
@@ -1660,7 +1679,7 @@ def this_week():
                             if str(logged_totality)[9] == '2':
                                 lt_days += 1
                             logged_totality = str(logged_totality)[11:]
-                    except: exams = "are coming"
+                    except: pass
 
                     if line[1] in work_tasks:
                         tt = datetime.strptime(worked, FMT)
@@ -1685,7 +1704,7 @@ def this_week():
         try:
             if sys.argv[3] == "logged":
                 print "(But you logged %s.)" % print_time_labels(logged_time)
-        except: penguins = "penguins"
+        except: pass
         print "You were %.2f%% productive." % productivity_measure
 
     if lt_days != int(0):
@@ -1776,7 +1795,7 @@ def projects():
             print "%s. \n Expected time: %s. Due: %s.\n" % (tasks[x], \
                     print_time_labels(time_expected[x]), date_due[x])
         print "------------------------------------------------------------------------"
-    except: john = "a chicken."
+    except: pass
 
 def random_task():
     f = open(tasks_file, 'r+')
@@ -1807,7 +1826,7 @@ def random_task():
     try:
         print " This may take up to %s." % print_time_labels(line[2])
         print " This is due on %s." % line[3][:10]
-    except: damn = "damn"
+    except: pass
     print "------------------------------------------------------------------------"
     print
 
@@ -1938,7 +1957,7 @@ def todo():
                         to_do_today.append(line)
                 if (sys.argv[2] == "all"):
                     to_do_today.append(line)
-            except: i_am = "one with the freaks"
+            except: pass
         try:
             if (sys.argv[2] == "all"):
                 if line[3] == "x":
@@ -1969,7 +1988,7 @@ def todo():
         try:
             print " This may take up to %s." % print_time_labels(line[2])
             print " This is due on %s." % line[3][:10]
-        except: damn = "damn"
+        except: pass
         print "------------------------------------------------------------------------"
         print
 
@@ -2107,6 +2126,88 @@ def ghi():
         f.write(output)
         print output
 
+# This integrates with ical to grab todays tasks. must be done manually
+def ical():
+    import subprocess
+
+    # print
+    print ''
+    print ' Writing to file...'
+
+    # Open tasks file for writing to.
+    f = open(tasks_file, 'r+')
+    lineList = f.readlines()
+
+    # Get the last PID, for later.
+    PID = 0
+    line = lineList[-1].split(', ')
+    PID = int(line[-1]) + 1
+
+    # For predefined event names
+    classes = {
+        'Semantic Theorie': 'sem', \
+        'Discourse Parsing and Language Technology': 'disc'
+        }
+
+    # ical has to be set up with a semlink. This only grabs the items from the
+    # rest of today, not for ones that have passed already.
+    cmd = [ 'ical', '-n', 'eventsToday' ]
+    output = subprocess.Popen(cmd, stdout=subprocess.PIPE).communicate()[0]
+
+    # Split based on bullet points
+    output = output.split('\xe2\x80\xa2 ')
+
+    # For each task
+    for x in output:
+        
+        # For predefined calendars
+        search_strings = ['University']
+        
+        # Check to see if the event is in those
+        for y in search_strings:
+            pattern = re.compile("\(" + y + "\)")
+            match_o = re.search(pattern, x)
+            if (match_o != None):
+                replacement = ' (' + y + ')'
+                # Grab it
+                x = x.replace(replacement, '').replace('    ','').split('\n')
+                # If it is predefined, sort it into the right topic
+                if classes.has_key(x[0]):
+                    topic = classes[x[0]]
+                    task = 'Class'
+                # Else, ask for it.
+                else:
+                    topic = raw_input('        Topic for: "' + x[0] + '"? ')
+                    if topic == 'none':
+                        continue
+                    task = raw_input('        Is the task "' + x[0] + '"? yn ')
+                    if task == 'y': task = x[0]
+                    else:
+                        task = raw_input('Task: ')
+                # Get the time it will take (but not when.)
+                time = x[1].split(' - ')
+                time = minutes_index(time[1])-minutes_index(time[0])
+                time = minutes_index(time)
+                # Get the date
+                today = str(datetime.datetime.now())[:10]
+                # The final string to be written
+                task_line = [topic, task, time, today, '1', '1', 'hard', \
+                        str(PID)+'\n']
+                # Print it prettily
+                print "    %s\t %s - %s." % (task_line[0], task_line[1], \
+                        print_time_labels(task_line[2]))
+                task_line = ', '.join(task_line)
+                # Write it
+                f.write(task_line)
+                PID += 1
+            continue
+
+    # print
+    print ' Written.'
+    print ''
+    f.close()
+
+
 '''
 The final argument functions.
 '''
@@ -2138,7 +2239,7 @@ if __name__ == "__main__":
         'search', 'cease', 'status', 'end', 'begin', 'being', 'start', 'help',
         'yesterday', 'topics', 'week', 'fence', 'tasks', 'projects', 'random',
         'write', 'task', 'PID', 'list', 'buy', 'm', 'v', 'to', 's', 'e', 'b',
-        'h', 'y', 'f', 'ta', 'p', 'r', 'w', 'l', 'unify', 'ghi']
+        'h', 'y', 'f', 'ta', 'p', 'r', 'w', 'l', 'unify', 'ghi', 'ical']
 
         # Editing
         if (sys.argv[1] == "mvim") or (sys.argv[1] == "m"): edit(sys.argv[2])
@@ -2173,6 +2274,9 @@ if __name__ == "__main__":
 
         # Github issue tracker
         if (sys.argv[1] == 'ghi'): ghi()
+
+        # iCal integration
+        if (sys.argv[1] == 'ical'): ical()
 
         if sys.argv[1] not in possible_arguments:
             print '\n You were just mauled by a ' + random_navi_animal() + '.\n '
