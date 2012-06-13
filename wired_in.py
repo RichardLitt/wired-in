@@ -884,8 +884,15 @@ def end():
         print ' Possible PIDs for \'%s\':' % project
         print
         for keys in PIDs: print '\t%s\t%s' % (keys, PIDs[keys]) 
-
-        PID = raw_input('PID: - ')
+        
+        # If there is only one PID, suggest it automagically.
+        if len(PIDs) == 1:
+            for keys in PIDs: key = keys
+            PID = raw_input('PID: ' + key + ' ')
+            if PID == '':
+                PID = key
+        else:
+            PID = raw_input('PID: - ')
         print
 
         print 'You were on the surface of Pandora from: ' + on[11:19] + ' to ' + off[11:19] + '.'
@@ -1536,21 +1543,24 @@ def tasks():
 
     except: pass
 
+
     # This should subtract the time from what you're doing from the total, 
     # based on seeing if the topic is in the tasks to do and is currently going
     # on.
 
     # This will run over and then have to be cut back if you go over. 
-    if log[1] in projects:
-        from datetime import datetime
-        on = log[0]
-        off = str(datetime.now())
-        FMT = '%H:%M:%S'
-        tdelta = datetime.strptime(off[11:19], FMT) - datetime.strptime(on[11:19], FMT)
-        #on = log.replace(", ", ". Your current Operation: ").replace(",", ".")
-        worked = str(tdelta)
-        time_left_today = minutes_index(time_left_today) - minutes_index(worked)
-        time_left_today = minutes_index(time_left_today)
+    if len(log) <= 3:
+        if log[1] in projects:
+            from datetime import datetime
+            on = log[0]
+            off = str(datetime.now())
+            if on[:10] == off[:10]:
+                FMT = '%H:%M:%S'
+                tdelta = datetime.strptime(off[11:19], FMT) - datetime.strptime(on[11:19], FMT)
+                #on = log.replace(", ", ". Your current Operation: ").replace(",", ".")
+                worked = str(tdelta)
+                time_left_today = minutes_index(time_left_today) - minutes_index(worked)
+                time_left_today = minutes_index(time_left_today)
 
     print
     # Prints the total time left given the tasks to do.
@@ -1752,7 +1762,7 @@ def topics():
     set = {}
     map(set.__setitem__, topics, []) 
     pp = pprint.PrettyPrinter(indent=4)
-    pp.pprint(set.keys())
+    pp.pprint(sorted(set.keys()))
     print "------------------------------------------------------------------------"
 
 
@@ -1776,7 +1786,7 @@ def projects():
     set = {} 
     map(set.__setitem__, topics, []) 
     pp = pprint.PrettyPrinter(indent=4)
-    pp.pprint(set.keys())
+    pp.pprint(sorted(set.keys()))
     print "------------------------------------------------------------------------"
     try:
         tasks = []
@@ -2146,7 +2156,8 @@ def ical():
     # For predefined event names
     classes = {
         'Semantic Theorie': 'sem', \
-        'Discourse Parsing and Language Technology': 'disc'
+        'Discourse Parsing and Language Technology': 'disc', \
+        'Basic Algorithms for Computational Linguistics': 'bracoli'
         }
 
     # ical has to be set up with a semlink. This only grabs the items from the
@@ -2282,4 +2293,4 @@ if __name__ == "__main__":
             print '\n You were just mauled by a ' + random_navi_animal() + '.\n '
     except: status()
 
-# Today's my birthday, after all. - Jake Sully
+    # Today's my birthday, after all. - Jake Sully
