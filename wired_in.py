@@ -360,6 +360,7 @@ def PID(PID):
     f = open(tasks_file, 'r+')
     lineList = f.readlines()
     for line in lineList:
+        if line[0] == '#': continue
         line = line.split(', ')
         line[7] = line[7].replace('\n', '')
         if line[7] == PID:
@@ -877,6 +878,7 @@ def end():
         g = g.readlines()
         PIDs = {}
         for line in g: 
+            if line[0] == '#': continue
             line = line.split(', ')
             if line[0] == project:
                 pid = line[7].replace('\n','')
@@ -980,6 +982,7 @@ def fence():
         g = g.readlines()
         PIDs = {}
         for line in g: 
+            if line[0] == '#': continue
             line = line.split(', ')
             if line[0] == project:
                 pid = line[7].replace('\n','')
@@ -1196,6 +1199,7 @@ def search():
     print
     print "---------------------------------Search---------------------------------"
     for line in lineList:
+        if line[0] == '#': continue
         line = line.split(', ')
         if sys.argv[2] == line[1]:
                 FMT = '%H:%M:%S'
@@ -1272,6 +1276,7 @@ def today():
     done_jobs = []
 
     for line in lineList:
+        if line[0] == '#': continue
         line = line.replace('\n', '').split(', ')
         if str(time_now)[:10] == line[0][:10]:
 
@@ -1381,6 +1386,7 @@ def tasks():
 
     # Adds the tasks to do to a list.
     for line in lineList:
+        if line[0] == '#': continue
         line = task_division(line,oxygenList)
         line = line.split(', ')
         today = datetime.now()
@@ -1393,6 +1399,7 @@ def tasks():
                 # Would have to change from .csv to do this. :/
 
         for log in oxygenList:
+            if line[0] == '#': continue
             log = log.split(', ')
 
             # Ideally, this shouldn't neet to happen, but that's dependant on
@@ -1528,6 +1535,7 @@ def tasks():
                 print
                 print 'X-tasks:'
                 for line in lineList:
+                    if line[0] == '#': continue
                     line = line.split(', ')
                     if line[6] == 'x':
                         if len(line[0]) <= 6: line[0] = line[0] + '    '
@@ -1583,6 +1591,7 @@ def yesterday():
     logged_time = "00:00:00"
     specific_job_catch = "empty"
     for line in lineList:
+        if line[0] == '#': continue
         line = line.replace('\n', '')
         today_date = day_index(str(time_now)[:10])
         modify_date = int(today_date)-1
@@ -1639,6 +1648,7 @@ def this_week():
         logged_time = "00:00:00"
         specific_job_catch = "empty"
         for line in lineList:
+            if line[0] == '#': continue
             line = line.replace('\n', '')
             today_date = day_index(str(time_now)[:10])
             modify_date = int(today_date)-int(x)
@@ -1757,6 +1767,7 @@ def topics():
     print
     print "---------------------------------Topics---------------------------------"
     for line in lineList:
+        if line[0] == '#': continue
         line = line.split(', ')
         topics.append(line[1])
     set = {}
@@ -1781,6 +1792,7 @@ def projects():
     print
     print "-----------------------------Task Topics--------------------------------"
     for line in lineList:
+        if line[0] == '#': continue
         line = line.split(', ')
         topics.append(line[0])
     set = {} 
@@ -1793,6 +1805,7 @@ def projects():
         time_expected = []
         date_due = []
         for line in lineList:
+            if line[0] == '#': continue
             line = line.split(', ')
             if sys.argv[2] == line[0]:
                 tasks.append(line[1])
@@ -1814,6 +1827,7 @@ def random_task():
     try:
         if sys.argv[2] == 'today':
             for line in lineList:
+                if line[0] == '#': continue
                 line_split = line.split(', ')
                 today = str(datetime.datetime.now())[:10]
                 if line_split[3] != 'x':
@@ -1934,6 +1948,7 @@ def task_write():
 
     PID = 0
     for line in lineList:
+        if line[0] == '#': continue
         line = line.split(', ')
         PID = int(line[-1]) + 1
 
@@ -1953,6 +1968,7 @@ def todo():
     to_do_today = []
     error = []
     for line in lineList:
+        if line[0] == '#': continue
         line = task_division(line,oxygenList)
         line = line.split(', ')
         today = datetime.datetime.now()
@@ -2010,10 +2026,12 @@ def unify():
     logList = f.readlines()
     tasks = []
     for line in taskList:
+        if line[0] == '#': continue
         line = line.split(', ')
         tasks.append(line[0])
     logs = []
     for line in logList:
+        if line[0] == '#': continue
         line = line.split(', ')
         logs.append(line[1])
     tasks_only = []
@@ -2054,6 +2072,7 @@ def view_list():
     other = []
 
     for line in lineList:
+        if line[0] == '#': continue
         line = line.split(', ')
         line[3] = line[3].replace('\n','')
         if line[3] == 'y':
@@ -2157,7 +2176,9 @@ def ical():
     classes = {
         'Semantic Theorie': 'sem', \
         'Discourse Parsing and Language Technology': 'disc', \
-        'Basic Algorithms for Computational Linguistics': 'bracoli'
+        'Basic Algorithms for Computational Linguistics': 'bracoli', \
+        'Language Technology': 'LT', \
+        'Computational Linguistics': 'coli' \
         }
 
     # ical has to be set up with a semlink. This only grabs the items from the
