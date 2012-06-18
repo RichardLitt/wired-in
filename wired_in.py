@@ -2216,8 +2216,15 @@ def ical():
                     if task == 'y': task = x[0]
                     else:
                         task = raw_input('Task: ')
+                # Except for location, lose that information
                 # Get the time it will take (but not when.)
-                time = x[1].split(' - ')
+                pattern = re.compile("location")
+                match_loc = re.search(pattern, x[1])
+                if match_loc != None:
+                    time = x[2].split(' - ')
+                else:
+                    time = x[1].split(' - ')
+                print time
                 time = minutes_index(time[1])-minutes_index(time[0])
                 time = minutes_index(time)
                 # Get the date
@@ -2225,6 +2232,7 @@ def ical():
                 # The final string to be written
                 task_line = [topic, task, time, today, '1', '1', 'hard', \
                         str(PID)+'\n']
+
                 # Print it prettily
                 print "    %s\t %s - %s." % (task_line[0], task_line[1], \
                         print_time_labels(task_line[2]))
@@ -2312,6 +2320,8 @@ if __name__ == "__main__":
 
         if sys.argv[1] not in possible_arguments:
             print '\n You were just mauled by a ' + random_navi_animal() + '.\n '
-    except: status()
+    except: 
+        status()
+        raise
 
     # Today's my birthday, after all. - Jake Sully
