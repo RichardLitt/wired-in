@@ -2224,7 +2224,7 @@ def ical():
                     time = x[2].split(' - ')
                 else:
                     time = x[1].split(' - ')
-                print time
+                print 'From %s to %s: ' % (time[0], time[1])
                 time = minutes_index(time[1])-minutes_index(time[0])
                 time = minutes_index(time)
                 # Get the date
