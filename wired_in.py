@@ -2142,7 +2142,7 @@ def buy():
 
 def ghi():
     import subprocess
-    cmd = [ 'ghi' ]
+    cmd = [ 'ghi', 'list', '--reverse']
     output = subprocess.Popen(cmd, stdout=subprocess.PIPE).communicate()[0]
     test = output.split('\n')
     if len(test) <= 2:
