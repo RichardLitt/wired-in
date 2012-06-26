@@ -740,38 +740,45 @@ def begin():
 
         if what_time != '':
             try:
-                try:
+                if len(what_time.split(':')) == 2:
+                    time_now = str(datetime.now())
+                    time_adjust = time_now[:11] + what_time + ':00.000000'
+                    ## Failed attempt to subtract. Now really necessary, so
+                    ## discaded.
+                    #what_time = what_time.split(':')
+                    #time_now = minutes_index(str(datetime.now())[11:16])
+                    #what_time = int(what_time[0])*60 + int(what_time[1])
+                    #what_time = time_now - what_time
+                    print
+                    print "-----------------------------------------------------------------------"
+                    print "You have just adjusted time backwards: " 
+                    print time_now + " is now " + time_adjust + "."
+                    print "-----------------------------------------------------------------------"
+                else:
                     pattern = re.compile("\d+")
                     match_o = re.match(pattern, what_time)
                     if (match_o != None):
                         what_time = what_time
-                except: 
-                    if len(what_time.split(':')) == 2:
-                        time_now = minutes_index(datetime.now())
-                        what_time = what_time[0]*60 + what_time[1]
-                        what_time = time_now - minutes_index(what_time)
-                        print what_time
-                time_now = datetime.now()
-                min_change = timedelta(minutes=int(what_time))
-                time_adjust = time_now - min_change
-                print
-                print "-----------------------------------------------------------------------"
-                print "You have just adjusted time backwards: " 
-                print str(time_now) + " is now " + str(time_adjust) + "."
-                print "-----------------------------------------------------------------------"
-                time_now = time_adjust
+                    time_now = datetime.now()
+                    min_change = timedelta(minutes=int(what_time))
+                    time_adjust = time_now - min_change
+                    print
+                    print "-----------------------------------------------------------------------"
+                    print "You have just adjusted time backwards: " 
+                    print str(time_now) + " is now " + str(time_adjust) + "."
+                    print "-----------------------------------------------------------------------"
             except:
                 if what_time == "last":
                     f = open(output_file_name, 'r+')
                     lineList = f.readlines()
-                    time_now = lineList[-1].split(', ')[2]
+                    time_adjust = lineList[-1].split(', ')[2]
                     print
                     print "-----------------------------------------------------------------------"
-                    print "You start when you stopped, at " + time_now + "."
+                    print "You start when you stopped, at " + time_adjust + "."
                     print "-----------------------------------------------------------------------"
 
         print
-        f.write(str(what_time) + ', ' + project + ', ')
+        f.write(str(time_adjust) + ', ' + project + ', ')
         f.close()
 
 # How to end a logline. 
@@ -2324,8 +2331,6 @@ if __name__ == "__main__":
 
         if sys.argv[1] not in possible_arguments:
             print '\n You were just mauled by a ' + random_navi_animal() + '.\n '
-    except: 
-        status()
-        raise
+    except IndexError: status()
 
     # Today's my birthday, after all. - Jake Sully
