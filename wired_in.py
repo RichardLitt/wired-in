@@ -733,7 +733,8 @@ def begin():
 
         # Same with time
         try: what_time = str(sys.argv[3])
-        except: what_time = raw_input('begin: now. ')
+        except: 
+            what_time = raw_input('begin: now. ')
 
         if what_time == '': time_now = datetime.now()
 
@@ -770,7 +771,7 @@ def begin():
                     print "-----------------------------------------------------------------------"
 
         print
-        f.write(str(time_now) + ', ' + project + ', ')
+        f.write(str(what_time) + ', ' + project + ', ')
         f.close()
 
 # How to end a logline. 
@@ -2189,15 +2190,18 @@ def ical():
     # Split based on bullet points
     output = output.split('\xe2\x80\xa2 ')
 
-    # For each task
-    for x in output:
-        
-        # For predefined calendars
-        search_strings = ['University']
-        
-        # Check to see if the event is in those
-        for y in search_strings:
+    # For predefined calendars
+    search_strings = ['University', 'Work']
+
+    # Check to see if the event is in those
+    for y in search_strings:
+
+        # For each task
+        for x in output:
+
+            print y
             pattern = re.compile("\(" + y + "\)")
+            print pattern, x
             match_o = re.search(pattern, x)
             if (match_o != None):
                 replacement = ' (' + y + ')'
