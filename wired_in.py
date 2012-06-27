@@ -53,6 +53,7 @@ def help():
     print
     print " write/w (Hours and minutes, or today optional)"
     print " projects <project>"
+    print " todo [topic/date]"
     print " random [today]"
     print " task [today/all]"
     print " mvim/vi <file>"
@@ -736,7 +737,7 @@ def begin():
         except: 
             what_time = raw_input('begin: now. ')
 
-        if what_time == '': time_now = datetime.now()
+        if what_time == '': time_adjust = datetime.now()
 
         if what_time != '':
             try:
@@ -960,13 +961,15 @@ def fence():
         first_time = raw_input(' from: ')
         if len(first_time) != 5:
             if first_time != "last":
-                conversion = raw_input('Did you mean 0'\
-                        +first_time+'? yn ')
-                if conversion == 'y':
-                    first_time = '0'+first_time
-                if conversion == 'n':
-                    print "Military time please."
-                    first_time = raw_input(' from (HH:MM): ')
+                # This will probably be buggy. 
+                if first_time[6] != 'y':
+                    conversion = raw_input('Did you mean 0'\
+                            +first_time+'? yn ')
+                    if conversion == 'y':
+                        first_time = '0'+first_time
+                    if conversion == 'n':
+                        print "Military time please."
+                        first_time = raw_input(' from (HH:MM): ')
 
         second_time = raw_input(' to: ')
         if len(second_time) != 5:
@@ -1010,15 +1013,23 @@ def fence():
         if first_time == "last":
             on = last_line[2]
         if first_time != "last":
-            pattern = re.compile("\d+:\d+")
-            match_o = re.match(pattern, first_time)
-            if (match_o != None):
-                today = str(datetime.now())
-                pattern = re.compile("\d+:")
-                match_h = re.match(pattern, first_time)
-                if (match_h != None):
-                    today = today[:11] + match_h.group(0) + today[14:]
-                    on = today[:14] + first_time[-2:] + ":00.000000"
+                pattern = re.compile("\d+:\d+")
+                match_o = re.match(pattern, first_time)
+                if (match_o != None):
+                    today = str(datetime.now())
+                    pattern = re.compile("\d+:")
+                    match_h = re.match(pattern, first_time)
+                    if (match_h != None):
+                        # If we're dealing with yesterday
+                        try:
+                            if first_time[6] == 'y':
+                                date = day_index(str(int(day_index(today[:10]))-1))
+                                on = date + ' ' + first_time.split(' ')[0] + \
+                                ':00.000000'
+                        # Or today.
+                        except:
+                            today = today[:11] + match_h.group(0) + today[14:]
+                            on = today[:14] + first_time[-2:] + ":00.000000"
 
         ## Find the second time.
         pattern = re.compile("\d+:\d+")
@@ -1062,7 +1073,7 @@ def fence():
         print 'Operation ' + project + ' is now terminated.'
         print "------------------------------------------------------------------------"
         print 
-        
+
         ## Write to output file.
         f.write(str(on) + ", ")
         f.write(project + ", ")
@@ -1273,8 +1284,6 @@ def today():
     from datetime import timedelta
     f = open(output_file_name, 'r')
     lineList = f.readlines()
-    # Will be useful when you integrate PIDs.
-    oxygenList = lineList
     time_now = datetime.now()
     print
     total_time = "00:00:00"
@@ -1513,7 +1522,6 @@ def tasks():
     for x in range(len(to_do_today)):
         line = to_do_today[x]
         if len(line[0]) <= 4: line[0] = line[0] + '\t'
-        PID = line[7].replace('\n', '')
         time_left_today = time_add(line[2], time_left_today)
         if print_time_labels(line[2]) != "0 minutes":
             print "%s\t %s - %s." % (line[0], line[1], \
@@ -1529,7 +1537,6 @@ def tasks():
             for x in range(len(to_do_today_as_well)):
                 line = to_do_today_as_well[x]
                 if len(line[0]) <= 6: line[0] = line[0] + '    '
-                PID = line[7].replace('\n', '')
                 time_also_left_today = time_add(line[2], \
                         time_also_left_today)
                 if print_time_labels(line[2]) != "a while":
@@ -1547,7 +1554,6 @@ def tasks():
                     line = line.split(', ')
                     if line[6] == 'x':
                         if len(line[0]) <= 6: line[0] = line[0] + '    '
-                        PID = line[7].replace('\n', '')
                         time_also_left_today = time_add(line[2], \
                                 time_also_left_today)
                         if print_time_labels(line[2]) != "a while":
@@ -1595,9 +1601,7 @@ def yesterday():
     print "-----------------------------Yesterday---------------------------------"
     print
     total_time = "00:00:00"
-    total_time_alt = "00:00:00"
     logged_time = "00:00:00"
-    specific_job_catch = "empty"
     for line in lineList:
         if line[0] == '#': continue
         line = line.replace('\n', '')
@@ -1652,9 +1656,7 @@ def this_week():
     productivity = 0
     for x in range(int(sys.argv[2])):
         total_time = "00:00:00"
-        total_time_alt = "00:00:00"
         logged_time = "00:00:00"
-        specific_job_catch = "empty"
         for line in lineList:
             if line[0] == '#': continue
             line = line.replace('\n', '')
@@ -1672,7 +1674,6 @@ def this_week():
                     tdelta = datetime.strptime(off[11:19], FMT) - datetime.strptime(on[11:19], FMT)
                     on = lineList[-1].replace(", ", ". Your current Operation: ").replace(",", ".")
                     worked = str(tdelta)
-                    read_out = "Ongoing..."
                     FMT = '%H:%M:%S'
                     lt = datetime.strptime(worked, FMT)
                     logged_time = datetime.strptime(str(logged_time), FMT) + timedelta(hours=lt.hour,minutes=lt.minute,seconds=lt.second)
@@ -1691,11 +1692,6 @@ def this_week():
                         total_time = str(total_time)[11:]
                 if len(line) > 3:
                     worked = line[3]
-                    read_out = line[5]
-                    time_labels = print_time_labels(worked)
-                    # read_out_block = "%s for %s: %s" % (line[1], time_labels, read_out)
-                    # dedented_text = textwrap.dedent(read_out_block).strip()
-                    # print textwrap.fill(dedented_text, initial_indent='', subsequent_indent='    ')
                     FMT = '%H:%M:%S'
                     lt = datetime.strptime(worked, FMT)
                     logged_time = datetime.strptime(str(logged_time), FMT) + timedelta(hours=lt.hour,minutes=lt.minute,seconds=lt.second)
@@ -1791,6 +1787,62 @@ oxygen file in that it is for actual things which need to be done, and not for
 a log of time. Hopefully, this will evolve into a task manager that is more
 suited to my needs than things is.
 '''
+
+def list_all():
+    f = open(tasks_file, 'r+')
+    print
+    print 'All open tasks:'
+    topics = {}
+    try:
+        if sys.argv[2] == 'topic':
+            print 'By topic.'
+            for line in f.readlines():
+                if line[0] == '#': continue
+                line = line.replace('\n','').split(', ')
+                if line[0] in topics: 
+                    topics[line[0]][line[1]] = line[2:]
+                else: 
+                    topics[line[0]] = {}
+                    topics[line[0]][line[1]] = line[2:]
+
+            for topic in topics.iterkeys():
+                print
+                print '%s: ' % topic
+                for item in topics[topic]:
+                    print '\t', topics[topic][item][1][5:], '\t', \
+                            print_time_labels(topics[topic][item][0])\
+                            .replace('a while', '-\t').replace('1 hour', \
+                            '1 hour\t'), '\t', item
+            print
+        if sys.argv[2] == 'date':
+            print 'By date.'
+            for line in f.readlines():
+                if line[0] == '#': continue
+                line = line.replace('\n','').split(', ')
+                if line[3] in topics: 
+                    topics[line[3]][line[1]] = line
+                else: 
+                    topics[line[3]] = {}
+                    topics[line[3]][line[1]] = line
+
+            for topic in sorted(topics.iterkeys()):
+                print
+                print '%s: ' % topic
+                for item in topics[topic]:
+                    print '  ', print_time_labels(topics[topic][item][2])\
+                            .replace('a while', '-\t').replace('1 hour', \
+                            '1 hour\t'), '\t', topics[topic][item][0], '\t',\
+                            item
+            print
+    except: 
+        print 'Not ordered.'
+        for line in f.readlines():
+            if line[0] == '#': continue
+            line = line.replace('\n','').split(', ')
+            print '  %s\t%s\t%s\t%s' % (line[0], line[1], \
+                    print_time_labels(line[2]), line[3])
+        print 
+
 
 def projects():
     import pprint
@@ -2206,9 +2258,7 @@ def ical():
         # For each task
         for x in output:
 
-            print y
             pattern = re.compile("\(" + y + "\)")
-            print pattern, x
             match_o = re.search(pattern, x)
             if (match_o != None):
                 replacement = ' (' + y + ')'
@@ -2290,7 +2340,7 @@ if __name__ == "__main__":
         'search', 'cease', 'status', 'end', 'begin', 'being', 'start', 'help',
         'yesterday', 'topics', 'week', 'fence', 'tasks', 'projects', 'random',
         'write', 'task', 'PID', 'list', 'buy', 'm', 'v', 'to', 's', 'e', 'b',
-        'h', 'y', 'f', 'ta', 'p', 'r', 'w', 'l', 'unify', 'ghi', 'ical']
+        'h', 'y', 'f', 'ta', 'p', 'r', 'w', 'l', 'unify', 'ghi', 'ical', 'todo']
 
         # Editing
         if (sys.argv[1] == "mvim") or (sys.argv[1] == "m"): edit(sys.argv[2])
@@ -2311,6 +2361,7 @@ if __name__ == "__main__":
         if (sys.argv[1] == "fence") or (sys.argv[1] == "f"): fence()
 
         # Tasks
+        if (sys.argv[1] == "todo") or (sys.argv[1] == "l"): list_all()
         if (sys.argv[1] == "tasks") or (sys.argv[1] == "ta"): tasks()
         if (sys.argv[1] == "projects") or (sys.argv[1] == "p"): projects()
         if (sys.argv[1] == "random") or (sys.argv[1] == "r"): random_task()
