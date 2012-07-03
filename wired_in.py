@@ -892,7 +892,7 @@ def end():
         if len(PIDs) == 1:
             for keys in PIDs: key = keys
             PID = raw_input('PID: ' + key + ' ')
-            if PID == '':
+            if PID in ('y', 'ye', 'yes'):
                 PID = key
         else:
             PID = raw_input('PID: - ')
@@ -1374,7 +1374,19 @@ def today():
     except: print 'Tasks broke.'
     print 
     print "----------------------------------"
-    for job in done_jobs:
+
+    # Tried to make a way to make the show more cleaning by collapsing similar
+    # tasks.
+    #for job in range(len(done_jobs)):
+    #    if done_jobs[job].split()[0] == done_jobs[job+1].split()[0]:
+    #        time_one = done_jobs[job].split(':')[0].split('for ')[1]
+    #        time_two = done_jobs[job+1].split(':')[0].split('for ')[1]
+    #        print time_two
+    #        new_time = minutes_index(time_one) + minutes_index(time_two)
+    #        print new_time
+    if len(done_jobs) > 15:
+        print '. . .'
+    for job in done_jobs[-15:]:
         dedented_text = textwrap.dedent(job).strip()
         print textwrap.fill(dedented_text, initial_indent='', subsequent_indent='    ')
     print
