@@ -37,28 +37,34 @@ def help():
     print
     print "-------------------Help Desk-------------------"
     print
-    print " begin/being <project> [last]/[%d | backtime]"
-    print " end <project> <\"comment\">/<\"-x\">/<\"-c\"> [%d | backtime]" 
-    print " fence [manual]"
-    print " status"
-    print " cease"
-    print " topics"
-    print " PID"
+    print " b, begin PROJECT [last]/[%d | backtime]"
+    print " e, end PROJECT <\"comment\">/<\"-x\">/<\"-c\"> [%d | backtime]" 
+    print " f, fence [manual]"
+    print " s, status"
+    print " c, cease"
+    print " t, topics"
+    print " P, PID"
     print
-    print " search <project> [print]"
-    print " today [-][project]/[left]/[tasks] [all] [x]"
-    print " yesterday"
-    print " week <%d> [days to search]"
-    print " test"
+    print " se, search PROJECT [print]"
+    print " n, today [-][project]/[left]/[tasks] [all] [x]"
+    print " y, yesterday"
+    print " we, week <%d> [days to search]"
     print
-    print " write/w (Hours and minutes, or today optional)"
-    print " projects <project>"
-    print " todo [topic/date]"
-    print " random [today]"
+    print " w, write/w (Hours and minutes, or today optional)"
+    print " p, projects PROJECT"
+    print " l, todo [topic/date]"
+    print " r, random [today]"
     print " task [today/all]"
-    print " mvim/vi <file>"
-    print " unify"
+    print " m, mvim FILE"
+    print " v, vi FILE"
+    print " u, unify"
     print
+    print " li, list"
+    print " bi, buy"
+    print
+    print " ca, ical"
+    print
+    print " g, ghi"
     print "-----------------------------------------------"
     print
 
@@ -253,6 +259,7 @@ def minutes_index(string):
     return output
 
 # NLP for manual date input
+# This doesn't take into account weeks, or weekdays. And it should. How?
 def date_string(x):
     today = datetime.datetime.now()
 
@@ -271,11 +278,13 @@ def date_string(x):
 
     # If it is tomorrow
     if x == "tomorrow":
-        date = str(today)[:8] + str(int(str(today)[8:10])+1)
-        bad_dates = ["29", "30", "31"]
-        if date[8:10] in bad_dates:
-            print "Check the month - there may be no tomorrow."
-    pass_through = ['today', 'tomorrow', 'x']
+        date = day_index(int(day_index(str(today)[:10]))+1)
+
+    # If it is tomorrow
+    if x == "day after tomorrow":
+        date = day_index(int(day_index(str(today)[:10]))+2)
+    
+    pass_through = ['today', 'tomorrow', 'x', 'day after tomorrow']
 
     # If it is neither
     if x not in pass_through:
@@ -289,12 +298,6 @@ def date_string(x):
             months = ['no month', 'January', 'February', 'March', 'April', \
                     'May',  'June', 'July', 'August', 'September', 'October',\
                     'November', 'December']
-            ## Ignore case needs to be done by regex here.
-            #for y in months:
-            #    print x[0], y
-            #    ignorecase = re.search(x[0], y, re.IGNORECASE)
-            #    if ignorecase != None: 
-            #        print what
             if x[0] in months:
                 month = x[0]
                 if months.index(month) < 10:
@@ -303,6 +306,7 @@ def date_string(x):
             match_p = re.match(pattern, x[1])
             if (match_p != None):
                 day = x[1][:2]
+            # This should ignore case, but it doesn't.
             if (match_p == None):
                 pattern = re.compile("\d")
                 match_n = re.match(pattern, x[1][:1])
@@ -791,35 +795,23 @@ def end():
     on = lineList[-1]
     testLine = on.split(', ')
     if len(testLine) != 3:
+        print
+        print '    You are not currently working on a project.'
+        answer = raw_input('    Fence it? yn ')
+        if answer == 'y':
+            fence()
+        if answer == 'n':
+            print '    Goodbye.'
+            print 
         '''
-        testprevLine = lineList[-2].split(', ')
-        This may be unnecessary, actually.
-        if len(testprevLine) == 2:
-            print
-            print '    Theres a project going on the previos line.'
-            answer = raw_input('    Fence it? yn ')
-            if answer == 'y':
-                on = lineList[-2]
-            if answer == 'n':
-                print '    Manual fix assumed for now, then.'
-        print len(testLine)
-        '''
-        if len(testLine) != 2:
-            print
-            print '    You are not currently working on a project.'
-            answer = raw_input('    Fence it? yn ')
-            if answer == 'y':
-                fence()
-            if answer == 'n':
-                print '    Goodbye.'
-                print 
-        if len(testLine) == 2:
+        if len(testLine) == 3:
             print
             print '    You must manually fix log. '
             print
             testLine[1] = testLine[1].replace(',\n', '')
             testLine.append('')
             on = ', '.join(testLine)
+        '''
     if len(testLine) == 3:
         on_split = on.split(', ')
         off = datetime.now()
@@ -842,7 +834,7 @@ def end():
         if what_time != '':
             if len(what_time.split(' ')) == 2:
                 what_time = what_time.split(' ')
-                if what_time[1] == 'yesterday':
+                if what_time[1][0] == 'y':
                     today = datetime.now()
                     off = what_time[0] + ':00.000000'
                     off = on[0:11] + off
@@ -1943,7 +1935,7 @@ def task_write():
         time_exp = time_exp.split(' ')
 
         for x in range(len(time_exp)):
-            if (time_exp[x] == "minutes") or (time_exp[x] == "minute"):
+            if time_exp[x][0] == "m":
                 minutes_input = number_string(time_exp[x-1])
                 if int(minutes_input) >= 60:
                     hour_input += 1
@@ -1978,18 +1970,27 @@ def task_write():
 
     date = raw_input('date due: ')
 
+    task_types = ['hard', 'soft', 'cont', \
+            'dhard', 'dsoft', 'dcont', 'x']
+
     if date != 'today':
         if date != 'x':
 
             days_before = raw_input('days to work on: ')
 
-            print '(Task Types: hard  soft  cont (d--))'
             task_type = raw_input('type: ')
+            while task_type not in task_types:
+                print 'Task types: hard  soft  cont (d--)'
+                task_type = raw_input('\ttype: ')
 
     if date == 'today':
 
         task_type = raw_input('type: hard. ')
         if task_type == '': task_type = 'hard'
+        while task_type not in task_types:
+            print 'Task types: hard  soft  cont (d--)'
+            task_type = raw_input('\ttype: ')
+
         days_before = '1'
 
     if date == 'x':
@@ -2007,7 +2008,7 @@ def task_write():
         weight = '1'
 
     PID = 0
-    for line in lineList:
+    for line in lineList[-5:]:
         if line[0] == '#': continue
         line = line.split(', ')
         PID = int(line[-1]) + 1
@@ -2183,7 +2184,6 @@ def view_list():
 
 def buy():
     f = open(shopping_list, 'r+')
-    lineList = f.readlines()
     buyd = []
     print 
     print 'Add to list:'
@@ -2222,6 +2222,7 @@ def ical():
     # print
     print ''
     print ' Writing to file...'
+    print ''
 
     # Open tasks file for writing to.
     f = open(tasks_file, 'r+')
@@ -2298,9 +2299,18 @@ def ical():
                 print "    %s\t %s - %s." % (task_line[0], task_line[1], \
                         print_time_labels(task_line[2]))
                 task_line = ', '.join(task_line)
+
                 # Write it
-                f.write(task_line)
-                PID += 1
+                response = False
+                while response == False:
+                    write = raw_input('Write it? ')
+                    if write in ('y', 'ye', 'yes', ''):
+                        f.write(task_line)
+                        PID += 1
+                        response = True
+                    if write in ('n', 'no'):
+                        response = True
+
             continue
 
     # print
@@ -2339,25 +2349,26 @@ if __name__ == "__main__":
         possible_arguments = ['mvim', 'vi', 'test', 'today', 
         'search', 'cease', 'status', 'end', 'begin', 'being', 'start', 'help',
         'yesterday', 'topics', 'week', 'fence', 'tasks', 'projects', 'random',
-        'write', 'task', 'PID', 'list', 'buy', 'm', 'v', 'to', 's', 'e', 'b',
-        'h', 'y', 'f', 'ta', 'p', 'r', 'w', 'l', 'unify', 'ghi', 'ical', 'todo']
+        'write', 'task', 'PID', 'list', 'buy', 'to', 's', 'e', 'b',
+        'h', 'y', 'f', 'ta', 'p', 'r', 'w', 'l', 'unify', 'ghi', 'ical',
+        'todo', 'ca', 'n', 't', 'we', 'P', 'u', 'li', 'bi', 'g', 'ca']
 
         # Editing
-        if (sys.argv[1] == "mvim") or (sys.argv[1] == "m"): edit(sys.argv[2])
-        if (sys.argv[1] == "vi") or (sys.argv[1] == "v"): edit(sys.argv[2])
+        if (sys.argv[1] == "mvim"): edit(sys.argv[2])
+        if (sys.argv[1] == "vi"): edit(sys.argv[2])
 
         # Logs
-        if (sys.argv[1] == "today") or (sys.argv[1] == "to"): today()
-        if (sys.argv[1] == "search"): search()
-        if (sys.argv[1] == "cease"): cease()
+        if (sys.argv[1] == "today") or (sys.argv[1] == "n"): today()
+        if (sys.argv[1] == "search") or (sys.argv[1] == 'se'): search()
+        if (sys.argv[1] == "cease") or (sys.argv[1] == 'cease'): cease()
         if (sys.argv[1] == "status") or (sys.argv[1] == "s"): status()
         if (sys.argv[1] == "end") or (sys.argv[1] == "e"): end()
         if (sys.argv[1] == "begin") or (sys.argv[1] == "b"): begin()
         if (sys.argv[1] == "start"): begin()
         if (sys.argv[1] == "help") or (sys.argv[1] == "h"): help()
         if (sys.argv[1] == "yesterday") or (sys.argv[1] == "y"): yesterday()
-        if (sys.argv[1] == "topics"): topics()
-        if (sys.argv[1] == "week"): this_week()
+        if (sys.argv[1] == "topics") or (sys.argv[1] == 't'): topics()
+        if (sys.argv[1] == "week") or (sys.argv[1] == 'we'): this_week()
         if (sys.argv[1] == "fence") or (sys.argv[1] == "f"): fence()
 
         # Tasks
@@ -2367,18 +2378,18 @@ if __name__ == "__main__":
         if (sys.argv[1] == "random") or (sys.argv[1] == "r"): random_task()
         if (sys.argv[1] == "write") or (sys.argv[1] == "w"): task_write()
         if (sys.argv[1] == "task"): todo()
-        if (sys.argv[1] == "PID"): PID(sys.argv[2])
-        if (sys.argv[1] == "unify"): unify()
+        if (sys.argv[1] == "PID") or (sys.argv[1] == 'P'): PID(sys.argv[2])
+        if (sys.argv[1] == "unify") or (sys.argv[1] == 'u'): unify()
 
         # Shopping list
-        if (sys.argv[1] == 'list') or (sys.argv[1] == "l"): view_list()
-        if (sys.argv[1] == 'buy'): buy()
+        if (sys.argv[1] == 'list') or (sys.argv[1] == "li"): view_list()
+        if (sys.argv[1] == 'buy') or (sys.argv[1] == 'bi'): buy()
 
         # Github issue tracker
-        if (sys.argv[1] == 'ghi'): ghi()
+        if (sys.argv[1] == 'ghi') or (sys.argv[1] == 'g'): ghi()
 
         # iCal integration
-        if (sys.argv[1] == 'ical'): ical()
+        if (sys.argv[1] == 'ical') or (sys.argv[1] == 'ca'): ical()
 
         if sys.argv[1] not in possible_arguments:
             print '\n You were just mauled by a ' + random_navi_animal() + '.\n '
