@@ -48,7 +48,7 @@ def help():
     print " se, search PROJECT [print]"
     print " n, today [-][project]/[left]/[tasks] [all] [x]"
     print " y, yesterday"
-    print " we, week <%d> [days to search]"
+    print " we, week <%d | days to search> [logged] [workdays]"
     print
     print " w, write/w (Hours and minutes, or today optional)"
     print " p, projects PROJECT"
@@ -1330,7 +1330,7 @@ def today():
                         total_time_alt = str(tdelta)
                     specific_job = sys.argv[2][1:]
                     specific_job_catch = "except"
-            except: print 'problem with - statement' 
+            except: continue #print 'problem with - statement' 
 
             try:
                 if sys.argv[2][0] != "-":
@@ -1343,7 +1343,7 @@ def today():
                         total_time_alt = str(total_time_alt)[11:]
                         specific_job = line[1]
                         specific_job_catch = "only"
-            except: print 'problem with - except option'
+            except: continue #print 'problem with - except option'
 
     productivity_measure =(float(total_time[:2])*60+ \
             float(total_time[3:5]))/500*100
@@ -1371,9 +1371,11 @@ def today():
     try:
         if sys.argv[2] == "tasks":
             tasks()
-    except: print 'Tasks broke.'
-    print 
-    print "----------------------------------"
+            print 
+            print "----------------------------------"
+    except: 
+        print ''
+        print 'Today, you have done: '
 
     # Tried to make a way to make the show more cleaning by collapsing similar
     # tasks.
@@ -1739,30 +1741,40 @@ def this_week():
         logged_totality = str((lt_days*24) + int(logged_totality[:2])) + logged_totality[2:]
     if wt_days != int(0):
         work_totality = str((wt_days*24) + int(work_totality[:2])) + work_totality[2:]
-    productivity = productivity / float(int(sys.argv[2]))
+    # This only counts today up to the current time, weighing it better.
+    accurate_days = float(sys.argv[2])-1
+    try:
+        if sys.argv[4] == 'workdays': accurate_days = accurate_days*.7142
+    except: pass
+    accurate_days += float(minutes_index(str(time_now)[11:16]))/1440
+
+    productivity = productivity / accurate_days
     print
     print "-----------------------------------------------------------------------"
-    print "This week, you have worked %s." % print_time_labels(work_totality)
+    if int(sys.argv[2]) <= 7:
+        print "This week, you have worked %s." % print_time_labels(work_totality)
+    if int(sys.argv[2]) > 7:
+        print "You have worked %s." % print_time_labels(work_totality)
     if 0 < productivity <= 20:
         print "You are and were really lazy and inept." 
     if 20 < productivity <= 50:
-        print "You were only %s%% productive" % productivity
+        print "You were only %.2f%% productive" % productivity
     if 50 < productivity <= 75:
-        print "You were %s%% productive." % productivity
+        print "You were %.2f%% productive." % productivity
     if 75 < productivity <= 100:
-        print "You were, at %s%%, actually pretty productive." %productivity
+        print "You were, at %.2f%%, actually pretty productive." %productivity
     if productivity > 100:
-        print "Well done. You were really fucking productive. %s%%, to be \
+        print "Well done. You were really fucking productive. %.2f%%, to be \
         exact." % productivity
     work_totality = work_totality.split(':')
-    hours_per_diem = float(work_totality[0])/float(sys.argv[2])
-    print "Which is %s hours per day." % hours_per_diem
+    hours_per_diem = float(work_totality[0])/accurate_days
+    print "Which is %.2f hours per day." % hours_per_diem
     if logged_totality != "00:00:00":
         print
         print "Time actually logged: %s." % print_time_labels(logged_totality)
         logged_totality = logged_totality.split(':')
-        hours_per_diem = float(logged_totality[0])/float(sys.argv[2])
-        print "Which is %s hours per day." % hours_per_diem
+        hours_per_diem = float(logged_totality[0])/accurate_days
+        print "Which is %.2f hours per day." % hours_per_diem
     print "-----------------------------------------------------------------------"
     print 
 
@@ -2417,6 +2429,6 @@ if __name__ == "__main__":
 
         if sys.argv[1] not in possible_arguments:
             print '\n You were just mauled by a ' + random_navi_animal() + '.\n '
-    except IndexError: status()
+    except IndexError: raise #status()
 
     # Today's my birthday, after all. - Jake Sully
