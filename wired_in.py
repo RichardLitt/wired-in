@@ -1978,12 +1978,24 @@ def task_write():
         final_time_exp = hour_input + ':' + minutes_input \
                 + ':00'
         time_exp = final_time_exp
+        
+        # This should work. no guarantee. 
+        checker = False
+        while checker == False:
+            check = raw_input('is that ' + time_exp + '? ')
+            if check in ('y', 'ye', 'yes', 'ok'):
+                checker = True
+            elif re.search(pattern, check) != None:
+                time_exp = check
+            else:
+                check = raw_input('expected time: ')
+                time_exp = check
 
 
     date = raw_input('date due: ')
 
-    task_types = ['hard', 'soft', 'cont', \
-            'dhard', 'dsoft', 'dcont', 'x']
+    task_types = ['hard', 'soft', 'cont', 'over',\
+            'dhard', 'dsoft', 'dcont', 'dover','x']
 
     if date != 'today':
         if date != 'x':
@@ -1992,7 +2004,7 @@ def task_write():
 
             task_type = raw_input('type: ')
             while task_type not in task_types:
-                print 'Task types: hard  soft  cont (d--)'
+                print 'Task types: hard  soft  cont over (d--)'
                 task_type = raw_input('\ttype: ')
 
     if date == 'today':
