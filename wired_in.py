@@ -48,7 +48,7 @@ def help():
     print " se, search PROJECT [print]"
     print " n, today [-][project]/[left]/[tasks] [all] [x]"
     print " y, yesterday"
-    print " we, week <%d | days to search> [logged] [workdays]"
+    print " we, week <%d | days to search> [logged] [workdays] [%d | holidays]"
     print
     print " w, write/w (Hours and minutes, or today optional)"
     print " p, projects PROJECT"
@@ -1078,6 +1078,14 @@ def fence():
         f.write("\n")
         f.close()
 
+# Am I running a project (one line print)
+def state():
+    f = open(output_file_name, 'r')
+    lineList = f.readlines()
+    line = lineList[-1].split(', ')
+    if len(line) != 3: print 'off'
+    if len(line) == 3: print 'on'
+
 # Wait, what project am I running now, anyway?
 def status():
     f = open(output_file_name, 'r')
@@ -1745,6 +1753,10 @@ def this_week():
     accurate_days = float(sys.argv[2])-1
     try:
         if sys.argv[4] == 'workdays': accurate_days = accurate_days*.7142
+        try: 
+            if len(sys.argv) == 6: accurate_days = \
+                    accurate_days - int(sys.argv[5])
+        except: pass
     except: pass
     accurate_days += float(minutes_index(str(time_now)[11:16]))/1440
 
@@ -1764,8 +1776,8 @@ def this_week():
     if 75 < productivity <= 100:
         print "You were, at %.2f%%, actually pretty productive." %productivity
     if productivity > 100:
-        print "Well done. You were really fucking productive. %.2f%%, to be \
-        exact." % productivity
+        print "Well done. You were really fucking productive. %.2f%%, to be exact." \
+                % productivity
     work_totality = work_totality.split(':')
     hours_per_diem = float(work_totality[0])/accurate_days
     print "Which is %.2f hours per day." % hours_per_diem
@@ -1990,12 +2002,12 @@ def task_write():
         final_time_exp = hour_input + ':' + minutes_input \
                 + ':00'
         time_exp = final_time_exp
-        
-        # This should work. no guarantee. 
+
+        # Checks the time format until all options work.
         checker = False
         while checker == False:
             check = raw_input('is that ' + time_exp + '? ')
-            if check in ('y', 'ye', 'yes', 'ok'):
+            if check in ('y', 'ye', 'yes', 'ok', ''):
                 checker = True
             elif re.search(pattern, check) != None:
                 time_exp = check
@@ -2009,7 +2021,7 @@ def task_write():
     task_types = ['hard', 'soft', 'cont', 'over',\
             'dhard', 'dsoft', 'dcont', 'dover','x']
 
-    if date != 'today':
+    if date not in ('today', 'tonight', 'now'):
         if date != 'x':
 
             days_before = raw_input('days to work on: ')
@@ -2019,7 +2031,7 @@ def task_write():
                 print 'Task types: hard  soft  cont over (d--)'
                 task_type = raw_input('\ttype: ')
 
-    if date == 'today':
+    if date in ('today', 'tonight', 'now'):
 
         task_type = raw_input('type: hard. ')
         if task_type == '': task_type = 'hard'
@@ -2387,7 +2399,10 @@ if __name__ == "__main__":
         'yesterday', 'topics', 'week', 'fence', 'tasks', 'projects', 'random',
         'write', 'task', 'PID', 'list', 'buy', 'to', 's', 'e', 'b',
         'h', 'y', 'f', 'ta', 'p', 'r', 'w', 'l', 'unify', 'ghi', 'ical',
-        'todo', 'ca', 'n', 't', 'we', 'P', 'u', 'li', 'bi', 'g', 'ca']
+        'todo', 'ca', 'n', 't', 'we', 'P', 'u', 'li', 'bi', 'g', 'ca', 'state']
+
+        # Terminal
+        if (sys.argv[1] == "state"): state()
 
         # Editing
         if (sys.argv[1] == "mvim"): edit(sys.argv[2])
@@ -2429,6 +2444,6 @@ if __name__ == "__main__":
 
         if sys.argv[1] not in possible_arguments:
             print '\n You were just mauled by a ' + random_navi_animal() + '.\n '
-    except IndexError: raise #status()
+    except IndexError: status()
 
     # Today's my birthday, after all. - Jake Sully
