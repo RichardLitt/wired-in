@@ -30,7 +30,7 @@ issues_list = folder_path + '/wyred/ghi'
 # These change each semester, obviously.
 work_tasks = ["hiwi", 'conf', 'research', 'rep', 'german', 'work', #Non-denominational
         "FLST", "PSR", "syntax", 'CL4LRL', 'stats', #Wintersommester
-        "SE", 'bracoli', 'coli', 'sem', 'LT', 'disc'] #Sommersemester
+        'SE', 'bracoli', 'coli', 'sem', 'LT', 'disc', 'mword'] #Sommersemester
 
 # The help desk.
 def help():
@@ -1079,12 +1079,13 @@ def fence():
         f.close()
 
 # Am I running a project (one line print)
+# This is useful for the bash prompt plugin
 def state():
     f = open(output_file_name, 'r')
     lineList = f.readlines()
     line = lineList[-1].split(', ')
     if len(line) != 3: print 'off'
-    if len(line) == 3: print 'on'
+    if len(line) == 3: print line[1]
 
 # Wait, what project am I running now, anyway?
 def status():
@@ -1379,9 +1380,9 @@ def today():
     try:
         if sys.argv[2] == "tasks":
             tasks()
-            print 
-            print "----------------------------------"
-    except: 
+    except: pass
+
+    if len(done_jobs) != 0:
         print ''
         print 'Today, you have done: '
 
@@ -1394,11 +1395,13 @@ def today():
     #        print time_two
     #        new_time = minutes_index(time_one) + minutes_index(time_two)
     #        print new_time
+
     if len(done_jobs) > 15:
         print '. . .'
     for job in done_jobs[-15:]:
         dedented_text = textwrap.dedent(job).strip()
-        print textwrap.fill(dedented_text, initial_indent='', subsequent_indent='    ')
+        print textwrap.fill(dedented_text, initial_indent='',
+        subsequent_indent='')
     print
 
 # This basically shows what you need to do today. 
@@ -1586,6 +1589,14 @@ def tasks():
 
     # This will run over and then have to be cut back if you go over. 
     if len(log) <= 3:
+        
+        # This should be a way to work on subtracting from the main task the
+        # time you have left, as opposed to just in the final line.
+        count = 0
+        for check in to_do_today:
+            if log[1] == check[0].strip(): count += 1
+
+        # Back to your regularly scheduled program
         if log[1] in projects:
             from datetime import datetime
             on = log[0]
@@ -1668,7 +1679,10 @@ def this_week():
     lt_days = 0
     wt_days = 0
     productivity = 0
-    for x in range(int(sys.argv[2])):
+    from datetime import date 
+    if len(sys.argv) == 2: days_back = date.today().isoweekday()
+    if len(sys.argv) >= 3: days_back = int(sys.argv[2])
+    for x in range(days_back):
         total_time = "00:00:00"
         logged_time = "00:00:00"
         for line in lineList:
@@ -1731,26 +1745,26 @@ def this_week():
         productivity_measure = (float(total_time[:2])*60+float(total_time[3:5]))/500*100
         productivity += productivity_measure
         print
-        if x == 0: print "You've worked %s today." % \
+        if x == 0: print "\tYou've worked %s today." % \
             print_time_labels(total_time)
         if x == 1:
-            print "You worked a total of %s yesterday." % \
+            print "\tYou worked a total of %s yesterday." % \
             print_time_labels(total_time)
         if x >= 2:
-            print "You worked a total of %s %s days ago." % \
+            print "\tYou worked a total of %s %s days ago." % \
         (print_time_labels(total_time), x)
         try:
             if sys.argv[3] == "logged":
-                print "(But you logged %s.)" % print_time_labels(logged_time)
+                print "\t(But you logged %s.)" % print_time_labels(logged_time)
         except: pass
-        print "You were %.2f%% productive." % productivity_measure
+        print "\tYou were %.2f%% productive." % productivity_measure
 
     if lt_days != int(0):
         logged_totality = str((lt_days*24) + int(logged_totality[:2])) + logged_totality[2:]
     if wt_days != int(0):
         work_totality = str((wt_days*24) + int(work_totality[:2])) + work_totality[2:]
     # This only counts today up to the current time, weighing it better.
-    accurate_days = float(sys.argv[2])-1
+    accurate_days = float(days_back)-1
     try:
         if sys.argv[4] == 'workdays': accurate_days = accurate_days*.7142
         try: 
@@ -1763,9 +1777,9 @@ def this_week():
     productivity = productivity / accurate_days
     print
     print "-----------------------------------------------------------------------"
-    if int(sys.argv[2]) <= 7:
+    if int(days_back) <= 7:
         print "This week, you have worked %s." % print_time_labels(work_totality)
-    if int(sys.argv[2]) > 7:
+    if int(days_back) > 7:
         print "You have worked %s." % print_time_labels(work_totality)
     if 0 < productivity <= 20:
         print "You are and were really lazy and inept." 
@@ -2287,7 +2301,9 @@ def ical():
         'Discourse Parsing and Language Technology': 'disc', \
         'Basic Algorithms for Computational Linguistics': 'bracoli', \
         'Language Technology': 'LT', \
-        'Computational Linguistics': 'coli' \
+        'Computational Linguistics': 'coli', \
+        'Multiword Expressions and Collocations in theory and practice':\
+        'mword'
         }
 
     # ical has to be set up with a semlink. This only grabs the items from the
@@ -2444,6 +2460,6 @@ if __name__ == "__main__":
 
         if sys.argv[1] not in possible_arguments:
             print '\n You were just mauled by a ' + random_navi_animal() + '.\n '
-    except IndexError: status()
+    except IndexError: raise #status()
 
     # Today's my birthday, after all. - Jake Sully
