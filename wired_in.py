@@ -894,10 +894,13 @@ def end():
             if line[0] == project:
                 pid = line[7].replace('\n','')
                 PIDs[pid] = line[1]
-        print ' Possible PIDs for \'%s\':' % project
-        print
-        for keys in PIDs: print '\t%s\t%s' % (keys, PIDs[keys]) 
-        
+        if PIDs:
+            print ' Possible PIDs for \'%s\':' % project
+            print
+            for keys in PIDs: print '\t%s\t%s' % (keys, PIDs[keys])
+        else:
+            pass
+
         # If there is only one PID, suggest it automagically.
         if len(PIDs) == 1:
             for keys in PIDs: key = keys
@@ -905,7 +908,9 @@ def end():
             if PID in ('y', 'ye', 'yes'):
                 PID = key
         else:
-            PID = raw_input('PID: - ')
+            PID = ''
+            pass
+            #PID = raw_input('PID: - ')
         print
 
         print 'You were on the surface of Pandora from: ' + on[11:19] + ' to ' + off[11:19] + '.'
@@ -919,7 +924,10 @@ def end():
                     print "You survived for %s." % time_labels
         except: pass
         print
-        print 'Operation ' + project + ' ('+PID+') is now terminated. Your activity report readout: '
+        if PID == '':
+            print 'Operation ' + project + ' is now terminated. Your activity report readout: '
+        else:
+            print 'Operation ' + project + ' ('+PID+') is now terminated. Your activity report readout: '
         print comment
         
         print "------------------------------------------------------------------------"
