@@ -919,8 +919,9 @@ def end():
                     print "You survived for %s." % time_labels
         except: pass
         print
-        print 'Operation ' + project + ' is now terminated. Your activity report readout: '
+        print 'Operation ' + project + ' ('+PID+') is now terminated. Your activity report readout: '
         print comment
+        
         print "------------------------------------------------------------------------"
         f.write(str(off) + ", ")
         f.write(total_time + ", ")
@@ -1071,7 +1072,10 @@ def fence():
             if (match_o == None):
                     print "You survived for %s." % time_labels
         except: pass
-        
+
+        print 'This was assigned to PID: ' + PID + '.'
+        print
+
         print 'Operation ' + project + ' is now terminated.'
         print "------------------------------------------------------------------------"
         print 
