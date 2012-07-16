@@ -28,7 +28,7 @@ shopping_list = folder_path + '/wyred/shopping_list.csv'
 issues_list = folder_path + '/wyred/ghi'
 
 # These change each semester, obviously.
-work_tasks = ["hiwi", 'conf', 'research', 'rep', 'german', 'work', #Non-denominational
+work_tasks = ["hiwi", 'conf', 'research', 'rep', 'grad', 'ema', 'job', 'work', #Non-denominational
         "FLST", "PSR", "syntax", 'CL4LRL', 'stats', #Wintersommester
         'SE', 'bracoli', 'coli', 'sem', 'LT', 'disc', 'mword'] #Sommersemester
 
@@ -261,6 +261,7 @@ def minutes_index(string):
 # NLP for manual date input
 # This doesn't take into account weeks, or weekdays. And it should. How?
 def date_string(x):
+    from datetime import date
     today = datetime.datetime.now()
 
     # Converts YYYY/MM/DD to YYYY-MM-DD
@@ -273,21 +274,27 @@ def date_string(x):
         date = 'x'
 
     # If the string is just today
-    if x == "today":
+    elif x == "today":
         date = str(today)[:10]
 
     # If it is tomorrow
-    if x == "tomorrow":
+    elif x == ('tomorrow', 'manana', 'mañana'):
         date = day_index(int(day_index(str(today)[:10]))+1)
 
-    # If it is tomorrow
-    if x == "day after tomorrow":
+    # If it is the day after tomorrow
+    elif x in ('day after tomorrow', 'the day after tomorrow'):
         date = day_index(int(day_index(str(today)[:10]))+2)
-    
-    pass_through = ['today', 'tomorrow', 'x', 'day after tomorrow']
+
+    # If it is next week:
+    #elif x in ('next week', 'in a week'):
+    #   weekday = date.today().isoweekday()
+
+    # If it is this week:
+    #elif x in ('this week', 'this weekend', 'by next week', \
+    #        'before next week'):
 
     # If it is neither
-    if x not in pass_through:
+    else:
         # X must be YYYY-MM-DD
         pattern = re.compile("\d+\-\d+\-\d+")
         match_o = re.match(pattern, x)
@@ -299,9 +306,11 @@ def date_string(x):
                     'May',  'June', 'July', 'August', 'September', 'October',\
                     'November', 'December']
             if x[0] in months:
-                month = x[0]
-                if months.index(month) < 10:
-                    month = '0' + str(months.index(month))
+                month_check = x[0]
+                if months.index(month_check) < 10:
+                    month = '0' + str(months.index(month_check))
+                if months.index(month_check) == 11: month = '11'
+                if months.index(month_check) == 12: month = '12'
             pattern = re.compile("\d\d")
             match_p = re.match(pattern, x[1])
             if (match_p != None):
@@ -329,6 +338,7 @@ def date_string(x):
                         day = ordinal.index(day)
                         if day < int(10):
                             day = '0' + str(day)
+            # Will need to change this to automatic recognition.
             year = '2012'
             date = [year, month, str(day)]
             date = '-'.join(date)
@@ -891,7 +901,7 @@ def end():
         # If there is only one PID, suggest it automagically.
         if len(PIDs) == 1:
             for keys in PIDs: key = keys
-            PID = raw_input('PID: ' + key + ' ')
+            PID = raw_input('PID (y): ' + key + ' ')
             if PID in ('y', 'ye', 'yes'):
                 PID = key
         else:
@@ -2460,6 +2470,6 @@ if __name__ == "__main__":
 
         if sys.argv[1] not in possible_arguments:
             print '\n You were just mauled by a ' + random_navi_animal() + '.\n '
-    except IndexError: raise #status()
+    except IndexError: status()
 
     # Today's my birthday, after all. - Jake Sully
