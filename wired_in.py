@@ -1081,8 +1081,9 @@ def fence():
                     print "You survived for %s." % time_labels
         except: pass
 
-        print 'This was assigned to PID: ' + PID + '.'
-        print
+        if PID != '':
+            print 'This was assigned to PID: ' + PID + '.'
+            print
 
         print 'Operation ' + project + ' is now terminated.'
         print "------------------------------------------------------------------------"
@@ -1557,11 +1558,37 @@ def tasks():
             reverse=True)
     to_do_today_as_well = sorted(to_do_today_as_well, key=itemgetter(4), reverse=True)
 
+
+    # This checks to see if there is only one task going on which can be
+    # subtracted from if you're trying to get a live amount left. 
+    if len(log) <= 3:
+        count = 0
+        for check in to_do_today:
+            if log[1] == check[0].strip(): count += 1
+
     # Prints out what you have to do today (or yesterday...)
-    for x in range(len(to_do_today)):
-        line = to_do_today[x]
-        if len(line[0]) <= 4: line[0] = line[0] + '\t'
+    for line in to_do_today:
+
+        # If there is only one task that can be subtracted from, subtract the
+        # running tally from it. This more accurately shows the time left in
+        # the list itself. 
+        if count == 1:
+            if log[1] == line[0].strip():
+                on = log[0]
+                off = str(datetime.now())
+                if on[:10] == off[:10]:
+                    FMT = '%H:%M:%S'
+                    tdelta = datetime.strptime(off[11:19], FMT) - \
+                    datetime.strptime(on[11:19], FMT)
+                    worked = str(tdelta)
+                    line[2] = minutes_index(line[2]) - minutes_index(worked)
+                    line[2] = minutes_index(line[2])
+
+        # Compiling the time left today
         time_left_today = time_add(line[2], time_left_today)
+
+        # Formatting it for output
+        if len(line[0]) <= 4: line[0] = line[0] + '\t'
         if print_time_labels(line[2]) != "0 minutes":
             print "%s\t %s - %s." % (line[0], line[1], \
                     print_time_labels(line[2]))
@@ -1573,35 +1600,44 @@ def tasks():
         if sys.argv[3] == "all":
             print
             print "Also to do today:"
-            for x in range(len(to_do_today_as_well)):
-                line = to_do_today_as_well[x]
-                if len(line[0]) <= 6: line[0] = line[0] + '    '
+            for line in to_do_today_as_well:
+
+                # Compiling time left today
                 time_also_left_today = time_add(line[2], \
                         time_also_left_today)
+
+                # Formatting for output
+                if len(line[0]) <= 6: line[0] = line[0] + '    '
                 if print_time_labels(line[2]) != "a while":
                     print "%s\t %s - %s." % (line[0], line[1], \
                             print_time_labels(line[2]))
                 if print_time_labels(line[2]) == "a while":
                     print "%s\t %s." % (line[0], line[1])
-        # Trying to get a way to print out all x tasks
+
+        # Trying to get a way to print out all dateless tasks
         try:
             if sys.argv[4] == 'x':
                 print
                 print 'X-tasks:'
+
+                # Going back to the file
                 for line in lineList:
                     if line[0] == '#': continue
                     line = line.split(', ')
                     if line[6] == 'x':
-                        if len(line[0]) <= 6: line[0] = line[0] + '    '
+
+                        # Agg the time left
                         time_also_left_today = time_add(line[2], \
                                 time_also_left_today)
+
+                        #Formatting for output
+                        if len(line[0]) <= 6: line[0] = line[0] + '    '
                         if print_time_labels(line[2]) != "a while":
                             print "%s\t %s - %s." % (line[0], line[1], \
                                     print_time_labels(line[2]))
                         if print_time_labels(line[2]) == "a while":
                             print "%s\t %s." % (line[0], line[1])
         except: pass
-
     except: pass
 
 
@@ -1611,14 +1647,6 @@ def tasks():
 
     # This will run over and then have to be cut back if you go over. 
     if len(log) <= 3:
-        
-        # This should be a way to work on subtracting from the main task the
-        # time you have left, as opposed to just in the final line.
-        count = 0
-        for check in to_do_today:
-            if log[1] == check[0].strip(): count += 1
-
-        # Back to your regularly scheduled program
         if log[1] in projects:
             from datetime import datetime
             on = log[0]
@@ -1633,7 +1661,7 @@ def tasks():
 
     print
     # Prints the total time left given the tasks to do.
-    print "You have roughly %s of work to do." % print_time_labels(time_left_today)
+    print "You have around %s of work to do." % print_time_labels(time_left_today)
     if time_also_left_today != "00:00:00":
         print "You also have an extra %s of work after that." % \
                 print_time_labels(time_also_left_today)
