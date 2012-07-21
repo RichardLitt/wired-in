@@ -27,8 +27,12 @@ tasks_file = folder_path +  '/wyred/tasks.csv'
 shopping_list = folder_path + '/wyred/shopping_list.csv'
 issues_list = folder_path + '/wyred/ghi'
 
+# This is the amount of time you are expected to work each day
+exp_wpd = 480
+
 # These change each semester, obviously.
-work_tasks = ["hiwi", 'conf', 'research', 'rep', 'grad', 'ema', 'job', 'work', #Non-denominational
+work_tasks = ["hiwi", 'conf', 'research', 'rep', 'grad', 'ema', 'job', \
+        'work', 'review', #Non-denominational
         "FLST", "PSR", "syntax", 'CL4LRL', 'stats', #Wintersommester
         'SE', 'bracoli', 'coli', 'sem', 'LT', 'disc', 'mword'] #Sommersemester
 
@@ -909,8 +913,10 @@ def end():
                 PID = key
         else:
             PID = ''
-            pass
-            #PID = raw_input('PID: - ')
+            PID = raw_input('PID: - ')
+            if PID != '':
+                while PID not in PIDs:
+                    PID = raw_input('PID: - ')
         print
 
         print 'You were on the surface of Pandora from: ' + on[11:19] + ' to ' + off[11:19] + '.'
@@ -1304,6 +1310,7 @@ def search():
 # What is happening today? How much have I worked, on what, and how productive
 # have I been?
 def today():
+    global exp_wpd
     from datetime import datetime
     from datetime import timedelta
     f = open(output_file_name, 'r')
@@ -1378,7 +1385,9 @@ def today():
             except: continue #print 'problem with - except option'
 
     productivity_measure =(float(total_time[:2])*60+ \
-            float(total_time[3:5]))/500*100
+            float(total_time[3:5]))/exp_wpd*100
+
+
 
     print "You have worked a total of %s today." % print_time_labels(total_time)
     if total_time != logged_time:
@@ -1387,7 +1396,7 @@ def today():
 
     try: 
         if (sys.argv[2] == "left"):
-            time_left = 500-(float(total_time[:2])*60+float(total_time[3:5]))
+            time_left = exp_wpd-(float(total_time[:2])*60+float(total_time[3:5]))
             time_left_fmt = str(int((time_left-time_left%60)/60)) + ":" + str(int(time_left%60)) + ":00"
             print "You only have %s left to go!" % print_time_labels(time_left_fmt)
     except: pass
@@ -1561,8 +1570,8 @@ def tasks():
 
     # This checks to see if there is only one task going on which can be
     # subtracted from if you're trying to get a live amount left. 
+    count = 0
     if len(log) <= 3:
-        count = 0
         for check in to_do_today:
             if log[1] == check[0].strip(): count += 1
 
@@ -1582,6 +1591,7 @@ def tasks():
                     datetime.strptime(on[11:19], FMT)
                     worked = str(tdelta)
                     line[2] = minutes_index(line[2]) - minutes_index(worked)
+                    if line[2] <= 0: line[2] = 0
                     line[2] = minutes_index(line[2])
 
         # Compiling the time left today
@@ -1589,10 +1599,10 @@ def tasks():
 
         # Formatting it for output
         if len(line[0]) <= 4: line[0] = line[0] + '\t'
-        if print_time_labels(line[2]) != "0 minutes":
+        if print_time_labels(line[2]) != "a while":
             print "%s\t %s - %s." % (line[0], line[1], \
                     print_time_labels(line[2]))
-        if print_time_labels(line[2]) == "0 minutes":
+        if print_time_labels(line[2]) == "a while":
             print "%s\t %s." % (line[0], line[1])
 
     # Prints out the rest if you want to see them. 
@@ -1667,6 +1677,7 @@ def tasks():
                 print_time_labels(time_also_left_today)
 
 def yesterday():
+    global exp_wpd
     from datetime import datetime
     from datetime import timedelta
     f = open(output_file_name, 'r')
@@ -1700,7 +1711,7 @@ def yesterday():
                 total_time = datetime.strptime(str(total_time), FMT) + timedelta(hours=tt.hour,minutes=tt.minute,seconds=tt.second)
                 total_time = str(total_time)[11:]
     productivity_measure = (float(total_time[:2])*60+\
-            float(total_time[3:5]))/500*100
+            float(total_time[3:5]))/exp_wpd*100
     if total_time == '00:00:00':
         print "    You didn't log any work yesterday."
         print "    You were not productive in that regard."
@@ -1717,6 +1728,7 @@ def yesterday():
         print 
 
 def this_week():
+    global exp_wpd
     from datetime import datetime
     from datetime import timedelta
     f = open(output_file_name, 'r')
@@ -1792,7 +1804,8 @@ def this_week():
                             wt_days += 1
                         work_totality = str(work_totality)[11:]
         
-        productivity_measure = (float(total_time[:2])*60+float(total_time[3:5]))/500*100
+        productivity_measure = (float(total_time[:2])*60+ \
+                float(total_time[3:5]))/exp_wpd*100
         productivity += productivity_measure
         print
         if x == 0: print "\tYou've worked %s today." % \
@@ -2068,16 +2081,16 @@ def task_write():
         time_exp = final_time_exp
 
         # Checks the time format until all options work.
-        checker = False
-        while checker == False:
-            check = raw_input('is that ' + time_exp + '? ')
-            if check in ('y', 'ye', 'yes', 'ok', ''):
-                checker = True
-            elif re.search(pattern, check) != None:
-                time_exp = check
-            else:
-                check = raw_input('expected time: ')
-                time_exp = check
+        #checker = False
+        #while checker == False:
+        #    check = raw_input('is that ' + time_exp + '? ')
+        #    if check in ('y', 'ye', 'yes', 'ok', ''):
+        #        checker = True
+        #    elif re.search(pattern, check) != None:
+        #        time_exp = check
+        #    else:
+        #        check = raw_input('expected time: ')
+        #        time_exp = check
 
 
     date = raw_input('date due: ')
@@ -2125,6 +2138,13 @@ def task_write():
         line = line.split(', ')
         PID = int(line[-1]) + 1
 
+    print
+    print 'You have written this task: %s.' % (task)
+    print '\tjob'
+    print 'This should last %s, and is due %s.'%(print_time_labels(time_exp),\
+            date)
+    print 'Weight: %s. Days to work on: %s. Type: %s. PID: %s.' % \
+            (weight, days_before, task_type, str(PID))
     print
     f.write(task + ', ' + job + ', ' + time_exp + ', ' + date \
             + ', ' + weight + ', ' + days_before + \
