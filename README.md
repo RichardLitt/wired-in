@@ -62,10 +62,12 @@ type:
 `wyr help` will give you a more-or-less accurate list of the commands you can use. 
 
 I highly advise that you use this program along with [GeekTools](http://projects.tynsoe.org/en/geektool/) to stop the constant `wyr today tasks all`.
-Having it on the desktop is a great, easy, cluttered ux. 
-
-If you have a job and want to keep track of your hours, let me know and
-I'll hit you with my personal work python script.
+Having it on the desktop is a great, easy, cluttered ux. I've provided a
+screenshot below.
 
 ![An example screenshot. Wired in is on the left, beneath the
 Examination text](https://github.com/RichardLitt/wired-in/blob/master/screenshot.png?raw=true)
+
+If you have a job and want to keep track of your hours, let me know and
+I'll hit you with my personal work python script. I am keeping it off
+here due to security and privacy reasons.
