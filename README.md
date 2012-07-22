@@ -68,4 +68,4 @@ If you have a job and want to keep track of your hours, let me know and
 I'll hit you with my personal work python script.
 
 ![An example screenshot. Wired in is on the left, beneath the
-Examination text](https://github.com/RichardLitt/wired-in/blob/master/screenshot.png)
+Examination text](https://github.com/RichardLitt/wired-in/blob/master/screenshot.png?raw=true)
