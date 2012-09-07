@@ -32,7 +32,7 @@ exp_wpd = 480
 
 # These change each semester, obviously.
 work_tasks = ["hiwi", 'conf', 'research', 'rep', 'grad', 'ema', 'job', \
-        'work', 'review', #Non-denominational
+        'work', 'review', 'lrl',  #Non-denominational
         "FLST", "PSR", "syntax", 'CL4LRL', 'stats', #Wintersommester
         'SE', 'bracoli', 'coli', 'sem', 'LT', 'disc', 'mword'] #Sommersemester
 
@@ -142,7 +142,6 @@ def time_add(x, y):
     hours = int(x[0:2]) + int(y[0:2]) + hours
     if hours >= 24:
         days += 1
-        hours = hours - 24
     if len(str(hours)) == 1:
         hours = "0" + str(hours)
     if len(str(minutes)) == 1:
@@ -1062,6 +1061,11 @@ def fence():
         ## Compute the total time. 
         off = str(off)
         FMT = '%H:%M:%S'
+        if minutes_index(on[11:19]) >= minutes_index(off[11:19]):
+            check = raw_input('Are you sure? yn')
+            if check in ('y', 'yes', 'ye'): print 'Ok then'
+            if check not in ('y', 'yes', 'ye'): print 'Cancel then.'
+
         tdelta = datetime.strptime(off[11:19], FMT) \
                 - datetime.strptime(on[11:19], FMT)
         total_time = str(tdelta)
@@ -1181,21 +1185,27 @@ def status():
         off = str(datetime.now())
 
         # If you forgot to end the task yesterday or the days before
-        # This won't work for month overflow
+        # This won't work for month overflow.
+        # This doesn't actually work -says you've been working for a day. Need
+        # to fix later?
         if on[:10] != off[:10]:
             # Figure out how many days late
-            days_overflow = int(off[:10].split('-')[2]) - \
-            int(on[:10].split('-')[2])
+            #days_overflow = int(off[:10].split('-')[2]) - \
+            #int(on[:10].split('-')[2])
             # NLP for the day string
-            day_string = 'day'
-            if days_overflow >= 2:
-                day_string = 'days'
+            #day_string = 'day'
+            #if days_overflow >= 2:
+            #    day_string = 'days'
             FMT = '%H:%M:%S'
             tdelta = datetime.strptime(off[11:19], FMT) - datetime.strptime(on[11:19], FMT)
+            if str(tdelta)[0] == '-':
+                tdelta = str(tdelta)[8:]
+                #print tdelta
             # Print it out properly
             print 'You are currently on project %s in Pandora.' % last_job
-            print 'Time alive: %s %s and %s.' % (days_overflow, \
-                    day_string, print_time_labels(str(tdelta)))
+            print 'Time alive: %s.' % (#days_overflow, \
+                    #day_string, 
+                    print_time_labels(str(tdelta)))
 
         # If it is just a normal overflow, on the same day
         else:
@@ -1326,7 +1336,7 @@ def today():
     for line in lineList:
         if line[0] == '#': continue
         line = line.replace('\n', '').split(', ')
-        if str(time_now)[:10] == line[0][:10]:
+        if (str(time_now)[:10] == line[0][:10]) or (len(line) == 3):
 
             if len(line) == 3:
                 # if line[1] in work_tasks:
@@ -1338,6 +1348,7 @@ def today():
                 on = lineList[-1].replace(", ", ". \
                         Your current Operation: ").replace(",", ".")
                 worked = str(tdelta)
+                if worked[0] == '-': worked = worked[8:]
                 read_out = "Ongoing..."
 
 
@@ -1597,6 +1608,7 @@ def tasks():
         # Compiling the time left today
         time_left_today = time_add(line[2], time_left_today)
 
+
         # Formatting it for output
         if len(line[0]) <= 4: line[0] = line[0] + '\t'
         if print_time_labels(line[2]) != "a while":
@@ -1853,7 +1865,7 @@ def this_week():
     if 75 < productivity <= 100:
         print "You were, at %.2f%%, actually pretty productive." %productivity
     if productivity > 100:
-        print "Well done. You were really fucking productive. %.2f%%, to be exact." \
+        print "Well done. You have been really fucking productive. %.2f%%, to be exact." \
                 % productivity
     work_totality = work_totality.split(':')
     hours_per_diem = float(work_totality[0])/accurate_days
@@ -2134,13 +2146,14 @@ def task_write():
 
     PID = 0
     for line in lineList[-5:]:
-        if line[0] == '#': continue
+        # Commented out as it would ignore finished tasks and repeat PIDs
+        #if line[0] == '#': continue
         line = line.split(', ')
         PID = int(line[-1]) + 1
 
     print
     print 'You have written this task: %s.' % (task)
-    print '\tjob'
+    print ' -> '+ job
     print 'This should last %s, and is due %s.'%(print_time_labels(time_exp),\
             date)
     print 'Weight: %s. Days to work on: %s. Type: %s. PID: %s.' % \
