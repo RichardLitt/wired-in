@@ -32,7 +32,7 @@ exp_wpd = 480
 
 # These change each semester, obviously.
 work_tasks = ["hiwi", 'conf', 'research', 'rep', 'grad', 'ema', 'job', \
-        'work', 'review', 'lrl',  #Non-denominational
+        'work', 'review', 'lrl', 'realise',  #Non-denominational
         "FLST", "PSR", "syntax", 'CL4LRL', 'stats', #Wintersommester
         'SE', 'bracoli', 'coli', 'sem', 'LT', 'disc', 'mword'] #Sommersemester
 
@@ -281,7 +281,7 @@ def date_string(x):
         date = str(today)[:10]
 
     # If it is tomorrow
-    elif x == ('tomorrow', 'manana', 'mañana'):
+    elif x in ('tomorrow', 'manana', 'mañana'):
         date = day_index(int(day_index(str(today)[:10]))+1)
 
     # If it is the day after tomorrow
@@ -312,6 +312,7 @@ def date_string(x):
                 month_check = x[0]
                 if months.index(month_check) < 10:
                     month = '0' + str(months.index(month_check))
+                if months.index(month_check) == 10: month = '10'
                 if months.index(month_check) == 11: month = '11'
                 if months.index(month_check) == 12: month = '12'
             pattern = re.compile("\d\d")
@@ -512,7 +513,7 @@ def task_division(line,oxygenList):
                     time_taken_already = int(time_done[0])*60\
                             + int(time_done[1])
                     time_for_task = time_for_task - time_taken_already
-
+        
         # Splits according to days left
         today = str(datetime.datetime.now())[0:10]
         days_left = int(days_to_do)
@@ -1211,8 +1212,9 @@ def status():
         else:
             FMT = '%H:%M:%S'
             tdelta = datetime.strptime(off[11:19], FMT) - datetime.strptime(on[11:19], FMT)
-            print 'You are currently on project %s in Pandora.' % last_job
-            print 'Time alive: %s.' % print_time_labels(str(tdelta))
+            print '\tYou are currently working on Wyrd In.' # % last_job
+            # print 'You are currently on project %s in Pandora.' % last_job
+            print '\tTime logged: %s.' % print_time_labels(str(tdelta))
     print "------------------------------------------------------------------------"
     print ""
     f.close()
@@ -1423,7 +1425,9 @@ def today():
     try:
         if sys.argv[2] == "tasks":
             tasks()
-    except: pass
+    except Exception,e: 
+        print str(e)
+        pass
 
     if len(done_jobs) != 0:
         print ''
