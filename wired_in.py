@@ -34,7 +34,8 @@ exp_wpd = 480
 work_tasks = ["hiwi", 'conf', 'research', 'rep', 'grad', 'ema', 'job', \
         'work', 'review', 'lrl', 'realise',  #Non-denominational
         "FLST", "PSR", "syntax", 'CL4LRL', 'stats', #Wintersommester
-        'SE', 'bracoli', 'coli', 'sem', 'LT', 'disc', 'mword'] #Sommersemester
+        'SE', 'bracoli', 'coli', 'sem', 'LT', 'disc', 'mword', #Sommersemester
+        'thesis', 'nlp', 'rm', 'sw'] #malta 1
 
 # The help desk.
 def help():
@@ -1212,8 +1213,8 @@ def status():
         else:
             FMT = '%H:%M:%S'
             tdelta = datetime.strptime(off[11:19], FMT) - datetime.strptime(on[11:19], FMT)
-            print '\tYou are currently working on Wyrd In.' # % last_job
-            # print 'You are currently on project %s in Pandora.' % last_job
+            #print '\tYou are currently working on Wyrd In.' # % last_job
+            print '\tYou are currently working on project \'%s\' in Pandora.' % last_job
             print '\tTime logged: %s.' % print_time_labels(str(tdelta))
     print "------------------------------------------------------------------------"
     print ""
@@ -1592,7 +1593,7 @@ def tasks():
 
     # Prints out what you have to do today (or yesterday...)
     for line in to_do_today:
-
+        
         # If there is only one task that can be subtracted from, subtract the
         # running tally from it. This more accurately shows the time left in
         # the list itself. 
@@ -1611,7 +1612,6 @@ def tasks():
 
         # Compiling the time left today
         time_left_today = time_add(line[2], time_left_today)
-
 
         # Formatting it for output
         if len(line[0]) <= 4: line[0] = line[0] + '\t'
@@ -2390,7 +2390,14 @@ def ical():
         'Language Technology': 'LT', \
         'Computational Linguistics': 'coli', \
         'Multiword Expressions and Collocations in theory and practice':\
-        'mword'
+        'mword',
+        'CSA3221 - Semantic Technologies for the Web (CA & Mmo)': 'sw', \
+        'CSA3220 - Machine Learning, Expert Systems and Fuzzy Logic (KG)':\
+        'ml', 'ICS5000 - Natural Language Programming (MR)':'nlp', \
+        'CPS5000 - Fundamentals of Discrete Mathematics (GP)':'math', \
+        'LIN5570 - Computational Morphology (MR & CB)': 'como',\
+        'ICT5901 - Research Methods (JM)':'rm',\
+        'CSA5019 - Languages, Automata and Compilers (AF & SS)':'lac'
         }
 
     # ical has to be set up with a semlink. This only grabs the items from the
