@@ -35,7 +35,7 @@ work_tasks = ["hiwi", 'conf', 'research', 'rep', 'grad', 'ema', 'job', \
         'work', 'review', 'lrl', 'realise',  #Non-denominational
         "FLST", "PSR", "syntax", 'CL4LRL', 'stats', #Wintersommester
         'SE', 'bracoli', 'coli', 'sem', 'LT', 'disc', 'mword', #Sommersemester
-        'thesis', 'nlp', 'rm', 'sw'] #malta 1
+        'thesis', 'como', 'nlp', 'rm', 'sw', 'ml', 'wyrd'] #malta 1
 
 # The help desk.
 def help():
@@ -2429,10 +2429,14 @@ def ical():
                     task = 'Class'
                 # Else, ask for it.
                 else:
-                    topic = raw_input('        Topic for: "' + x[0] + '"? ')
+                    pass_statement = raw_input('\n\tWrite ' + x[0] + '? yn')
+                    if pass_statement == 'y':
+                        pass
+                    else: continue
+                    topic = raw_input('\tTopic for: "' + x[0] + '"? ')
                     if topic == 'none':
                         continue
-                    task = raw_input('        Is the task "' + x[0] + '"? yn ')
+                    task = raw_input('\tIs the task "' + x[0] + '"? yn ')
                     if task == 'y': task = x[0]
                     else:
                         task = raw_input('Task: ')
@@ -2444,7 +2448,7 @@ def ical():
                     time = x[2].split(' - ')
                 else:
                     time = x[1].split(' - ')
-                print 'From %s to %s: ' % (time[0], time[1])
+                print '\nFrom %s to %s: ' % (time[0], time[1])
                 time = minutes_index(time[1])-minutes_index(time[0])
                 time = minutes_index(time)
                 # Get the date
@@ -2471,8 +2475,8 @@ def ical():
 
             continue
 
-    # print
-    print ' Written.'
+    print ''
+    print 'Written.'
     print ''
     f.close()
 
