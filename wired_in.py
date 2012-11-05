@@ -35,7 +35,7 @@ work_tasks = ["hiwi", 'conf', 'research', 'rep', 'grad', 'ema', 'job', \
         'work', 'review', 'lrl', 'realise',  #Non-denominational
         "FLST", "PSR", "syntax", 'CL4LRL', 'stats', #Wintersommester
         'SE', 'bracoli', 'coli', 'sem', 'LT', 'disc', 'mword', #Sommersemester
-        'thesis', 'como', 'nlp', 'rm', 'sw', 'ml', 'wyrd'] #malta 1
+        'thesis', 'como', 'nlp', 'rm', 'sw', 'ml', 'wyrd', 'math'] #malta 1
 
 # The help desk.
 def help():
@@ -51,7 +51,7 @@ def help():
     print " P, PID"
     print
     print " se, search PROJECT [print]"
-    print " n, today [-][project]/[left]/[tasks] [all] [x]"
+    print " n, today [-][project]/[left]/[tasks] [all]/[display] [x]"
     print " y, yesterday"
     print " we, week <%d | days to search> [logged] [workdays] [%d | holidays]"
     print
@@ -180,13 +180,13 @@ def day_index(x):
         # This is going to mess up over the new year
         now = datetime.datetime.now()
         date.append(str(now)[0:4])
-        # This sould be able to account for strings over the new year, staring
+        # This sould be able to account for strings over the new year, starting
         # in november.
         if int(day_index(str(now)[0:10])) > 304:
             if int(x) < 200:
                 date[0] = date.append(int(str(now)[0:4])+1)
         for month in range(len(months)):
-            if int(x) >= months[month][1]:
+            if int(x) > months[month][1]:
                 month_store = month
                 date_store = int(x)-months[month][1]
                 if date_store < 10:
@@ -514,7 +514,7 @@ def task_division(line,oxygenList):
                     time_taken_already = int(time_done[0])*60\
                             + int(time_done[1])
                     time_for_task = time_for_task - time_taken_already
-        
+
         # Splits according to days left
         today = str(datetime.datetime.now())[0:10]
         days_left = int(days_to_do)
@@ -525,9 +525,13 @@ def task_division(line,oxygenList):
             if days_left <= 0:
                 days_left = 1
             line[3] = today
-
         time_for_task = (time_for_task / days_left) \
                 + time_for_task%days_left
+
+        # This may break the dsoft- if it is overshot, then it will reset to 0.
+        # Should change to perhaps 30 minutes? Not sure. 
+
+        if time_for_task < 0: time_for_task = 0
         line[2] = minutes_index(time_for_task)
 
         if time_for_task == 0: line[4] = '0'
@@ -1402,7 +1406,6 @@ def today():
             float(total_time[3:5]))/exp_wpd*100
 
 
-
     print "You have worked a total of %s today." % print_time_labels(total_time)
     if total_time != logged_time:
         print "(But you've logged %s.)" % print_time_labels(logged_time)
@@ -1590,10 +1593,15 @@ def tasks():
     if len(log) <= 3:
         for check in to_do_today:
             if log[1] == check[0].strip(): count += 1
+    try:
+        if isinstance(int(sys.argv[3]), int): 
+            visible = int(sys.argv[3])
+            to_do_today = to_do_today[:visible]
+    except:
+        visible = 'all'
 
     # Prints out what you have to do today (or yesterday...)
     for line in to_do_today:
-        
         # If there is only one task that can be subtracted from, subtract the
         # running tally from it. This more accurately shows the time left in
         # the list itself. 
@@ -1612,9 +1620,9 @@ def tasks():
 
         # Compiling the time left today
         time_left_today = time_add(line[2], time_left_today)
-
+        
         # Formatting it for output
-        if len(line[0]) <= 4: line[0] = line[0] + '\t'
+        if len(line[0]) <= 7: line[0] = line[0] + '\t'
         if print_time_labels(line[2]) != "a while":
             print "%s\t %s - %s." % (line[0], line[1], \
                     print_time_labels(line[2]))
@@ -1665,7 +1673,6 @@ def tasks():
                             print "%s\t %s." % (line[0], line[1])
         except: pass
     except: pass
-
 
     # This should subtract the time from what you're doing from the total, 
     # based on seeing if the topic is in the tasks to do and is currently going
