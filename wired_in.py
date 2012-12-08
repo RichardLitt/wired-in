@@ -31,8 +31,8 @@ issues_list = folder_path + '/wyred/ghi'
 exp_wpd = 480
 
 # These change each semester, obviously.
-work_tasks = ["hiwi", 'conf', 'research', 'rep', 'grad', 'ema', 'job', \
-        'work', 'review', 'lrl', 'realise',  #Non-denominational
+work_tasks = ["hiwi", 'conf', 'research', 'rep', 'grad', 'ema', 'nex', \
+        'work', 'review', 'lrl', 'realise', 'admin', 'bank', #Non-denominational
         "FLST", "PSR", "syntax", 'CL4LRL', 'stats', #Wintersommester
         'SE', 'bracoli', 'coli', 'sem', 'LT', 'disc', 'mword', #Sommersemester
         'thesis', 'como', 'nlp', 'rm', 'sw', 'ml', 'wyrd', 'math'] #malta 1
@@ -44,7 +44,7 @@ def help():
     print
     print " b, begin PROJECT [last]/[%d | backtime]"
     print " e, end PROJECT <\"comment\">/<\"-x\">/<\"-c\"> [%d | backtime]" 
-    print " f, fence [manual]"
+    print " f, fence, log [manual]"
     print " s, status"
     print " c, cease"
     print " t, topics"
@@ -1119,6 +1119,7 @@ def fence():
 
 # Am I running a project (one line print)
 # This is useful for the bash prompt plugin
+
 def state():
     f = open(output_file_name, 'r')
     lineList = f.readlines()
@@ -1132,7 +1133,7 @@ def status():
     from datetime import datetime
     lineList = f.readlines()
     print 
-    print "---------------------------------Status---------------------------------"
+    print "==============================  Status  =============================="
     line = lineList[-1].split(', ')
 
     # If there is no job currently going on
@@ -1158,7 +1159,7 @@ def status():
         if len(time_since) == 2:
             if time_since[0] == '-1 day':
                 time_since = time_since[1]
-                print '                   You\'ve crossed the dateline, Moby.'
+                print '\t\tYou\'ve crossed the dateline, Moby.'
                 print
 
         # Otherwise
@@ -1170,9 +1171,9 @@ def status():
         # string. It may not work if things are improved. 
         # In fact, I don't even think this is working now. 
         if len(time_since) >= 10:
-            print "Good morning. You haven't started working yet today."
+            print "\tGood morning. You haven't started working yet today."
             print
-            question = raw_input('Would you like to see what you did yesterday? yn ')
+            question = raw_input('\tWould you like to see what you did yesterday? yn ')
             if question == "y":
                 yesterday()
             if question == "n":
@@ -1180,9 +1181,9 @@ def status():
 
         # Tell me how long I haven't been working
         if len(time_since) < 10:
-            print "You have not been working for %s." % time_labels
+            print "\tYou have not been working for %s." % time_labels
             print
-        print "Your last job, %s, lasted %s. Comment: \n%s" % (on[4], print_time_labels(on[3]), on[5])
+        print "\tYour last job, %s, lasted %s. Comment: \n\t%s" % (on[4], print_time_labels(on[3]), on[5])
 
     # If there is a job currently under way
     if len(line) == 3:
@@ -1220,7 +1221,7 @@ def status():
             #print '\tYou are currently working on Wyrd In.' # % last_job
             print '\tYou are currently working on project \'%s\' in Pandora.' % last_job
             print '\tTime logged: %s.' % print_time_labels(str(tdelta))
-    print "------------------------------------------------------------------------"
+    print "======================================================================"
     print ""
     f.close()
 
@@ -1237,12 +1238,12 @@ def cease():
     FMT = '%H:%M:%S'
     tdelta = datetime.strptime(off[11:19], FMT) - datetime.strptime(on[11:19], FMT)
     print
-    print "---------------------------------Cease----------------------------------"
+    print "==============================  Cease  ==============================="
     print 'Mask off!'
     print 'You were on the surface of Pandora from ' + on[:19] + ' to ' + off[:19]
     print 'You survived for ' + str(tdelta) + '.'
     print 'What ho?! A break?'
-    print "------------------------------------------------------------------------"
+    print "======================================================================"
     print
     f.write(str(off) + ", ")
     f.write(str(tdelta) + ", ")
@@ -1319,7 +1320,7 @@ def search():
             print
             print "You have worked on %s for %s." % (sys.argv[2], print_time_labels(total_time))
             print
-    print "------------------------------------------------------------------------"
+    print "======================================================================"
     print
     f.close()
 
@@ -1540,7 +1541,7 @@ def tasks():
             # Or if it is due tomorrow but should be done today.
             elif (int(day_index(line[3]))-int(line[5])+1) <= \
             today_index:
-                ignore = ['dcont', 'dover']
+                ignore = ['cont', 'dcont', 'dover']
                 if line[6] in ignore:
                     to_do_today.append(line)
                 else:
@@ -1620,14 +1621,14 @@ def tasks():
 
         # Compiling the time left today
         time_left_today = time_add(line[2], time_left_today)
-        
+
         # Formatting it for output
         if len(line[0]) <= 7: line[0] = line[0] + '\t'
         if print_time_labels(line[2]) != "a while":
-            print "%s\t %s - %s." % (line[0], line[1], \
+            print "%s\t%s - %s." % (line[0], line[1], \
                     print_time_labels(line[2]))
         if print_time_labels(line[2]) == "a while":
-            print "%s\t %s." % (line[0], line[1])
+            print "%s\t%s." % (line[0], line[1])
 
     # Prints out the rest if you want to see them. 
     try:
@@ -2340,6 +2341,7 @@ def view_list():
 
 def buy():
     f = open(shopping_list, 'r+')
+    readLines = f.readlines()
     buyd = []
     print 
     print 'Add to list:'
@@ -2348,7 +2350,7 @@ def buy():
     print 'Reasons: food, life, gifts, uni, other'
     reason = raw_input('Reason: ')
     urgent = raw_input('Urgent [y/n]: ')
-    buyd.extend([item, price, reason, urgent])
+    buyd.extend([item, price, reason, urgent, '\n'])
     buyd = ', '.join(buyd)
     f.write(buyd)
     print 'Added to list.'
@@ -2520,7 +2522,8 @@ if __name__ == "__main__":
         'yesterday', 'topics', 'week', 'fence', 'tasks', 'projects', 'random',
         'write', 'task', 'PID', 'list', 'buy', 'to', 's', 'e', 'b',
         'h', 'y', 'f', 'ta', 'p', 'r', 'w', 'l', 'unify', 'ghi', 'ical',
-        'todo', 'ca', 'n', 't', 'we', 'P', 'u', 'li', 'bi', 'g', 'ca', 'state']
+        'todo', 'ca', 'n', 't', 'we', 'P', 'u', 'li', 'bi', 'g', 'ca', 'state',
+        'log']
 
         # Terminal
         if (sys.argv[1] == "state"): state()
@@ -2541,7 +2544,8 @@ if __name__ == "__main__":
         if (sys.argv[1] == "yesterday") or (sys.argv[1] == "y"): yesterday()
         if (sys.argv[1] == "topics") or (sys.argv[1] == 't'): topics()
         if (sys.argv[1] == "week") or (sys.argv[1] == 'we'): this_week()
-        if (sys.argv[1] == "fence") or (sys.argv[1] == "f"): fence()
+        if (sys.argv[1] == "fence") or (sys.argv[1] == "f") or \
+                (sys.argv[1] == "log"): fence()
 
         # Tasks
         if (sys.argv[1] == "todo") or (sys.argv[1] == "l"): list_all()
