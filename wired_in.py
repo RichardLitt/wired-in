@@ -1986,10 +1986,13 @@ def projects():
         topics.append(line[0])
     set = {} 
     map(set.__setitem__, topics, []) 
-    pp = pprint.PrettyPrinter(indent=4)
-    pp.pprint(sorted(set.keys()))
+    for x in xrange(0,len(sorted(set.keys())),9):
+        print ' ', ', '.join(sorted(set.keys())[x:x+9])
+    #pp = pprint.PrettyPrinter(indent=4)
+    #pp.pprint(sorted(set.keys()))
     print "------------------------------------------------------------------------"
     try:
+        pid = []
         tasks = []
         time_expected = []
         date_due = []
@@ -1997,6 +2000,7 @@ def projects():
             if line[0] == '#': continue
             line = line.split(', ')
             if sys.argv[2] == line[0]:
+                pid.append(line[-1].replace('\n',''))
                 tasks.append(line[1])
                 time_expected.append(line[2])
                 date_due.append(line[3].replace('\n',''))
@@ -2004,8 +2008,9 @@ def projects():
         print "For the task %s you should:" % sys.argv[2]
         print
         for x in range(len(time_expected)):
-            print "%s. \n Expected time: %s. Due: %s.\n" % (tasks[x], \
-                    print_time_labels(time_expected[x]), date_due[x])
+            print "%s\t%s.\n   \tExpected time: %s. Due: %s.\n" \
+                % (pid[x], tasks[x], \
+                print_time_labels(time_expected[x]), date_due[x])
         print "------------------------------------------------------------------------"
     except: pass
 
