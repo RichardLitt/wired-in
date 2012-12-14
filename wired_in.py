@@ -1430,6 +1430,8 @@ def today():
     try:
         if sys.argv[2] == "tasks":
             tasks()
+    except IndexError:
+        pass
     except Exception,e: 
         print str(e)
         pass
