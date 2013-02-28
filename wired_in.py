@@ -32,7 +32,7 @@ exp_wpd = 480
 
 # These change each semester, obviously.
 work_tasks = ["hiwi", 'conf', 'research', 'rep', 'grad', 'ema', 'nex', \
-        'work', 'review', 'lrl', 'realise', 'admin', 'bank', #Non-denominational
+        'work', 'review', 'lrl', 'realise', 'admin', 'bank', 'blog', #Non-denominational
         "FLST", "PSR", "syntax", 'CL4LRL', 'stats', #Wintersommester
         'SE', 'bracoli', 'coli', 'sem', 'LT', 'disc', 'mword', #Sommersemester
         'thesis', 'como', 'nlp', 'rm', 'sw', 'ml', 'wyrd', 'math'] #malta 1
@@ -1517,7 +1517,6 @@ def tasks():
 
                         # Sets the time left to do for this project.
                         line[2] = live_time
-
 
         # This is basically if it matches today or not. 
         today_index = int(day_index(str(today)[:10]))
