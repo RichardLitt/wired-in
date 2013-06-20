@@ -21,11 +21,11 @@ import random
 import textwrap
 
 # These are going to have to be edited for new users.
-folder_path = '/Users/richardlittauer/Github/wired-in'
-output_file_name = folder_path + '/wyred/oxygen.csv'
-tasks_file = folder_path +  '/wyred/tasks.csv'
-shopping_list = folder_path + '/wyred/shopping_list.csv'
-issues_list = folder_path + '/wyred/ghi'
+folder_path = '/Users/richard/Github/wired-in'
+output_file_name = folder_path + '/temp/oxygen.csv'
+tasks_file = folder_path +  '/temp/tasks.csv'
+shopping_list = folder_path + '/temp/shopping_list.csv'
+issues_list = folder_path + '/temp/ghi'
 
 # This is the amount of time you are expected to work each day
 exp_wpd = 480
