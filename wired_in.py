@@ -31,7 +31,7 @@ issues_list = folder_path + '/wyred/ghi'
 exp_wpd = 480
 
 # These change each semester, obviously.
-work_tasks = ["hiwi", 'conf', 'research', 'rep', 'grad', 'ema', 'nex', \
+work_tasks = ["hiwi", 'conf', 'research', 'rep', 'grad', 'ema', 'ideapod', \
         'work', 'review', 'lrl', 'realise', 'admin', 'bank', 'blog', #Non-denominational
         "FLST", "PSR", "syntax", 'CL4LRL', 'stats', #Wintersommester
         'SE', 'bracoli', 'coli', 'sem', 'LT', 'disc', 'mword', #Sommersemester
@@ -379,14 +379,18 @@ def void():
 def PID(PID):
     f = open(tasks_file, 'r+')
     lineList = f.readlines()
+    commented_out = False
     for line in lineList:
-        if line[0] == '#': continue
         line = line.split(', ')
         line[7] = line[7].replace('\n', '')
         if line[7] == PID:
+            if line[0][0] == '#': commented_out = True
             print
             print 'Information for PID %s:' % PID
-            print 'Project: ' + line[0]
+            if commented_out == True: 
+                print 'Completed: Yes'
+            else: print 'Completed: No'
+            print 'Project: ' + line[0][1:]
             print 'Task: ' + line[1]
             print 'Expected Time: ' + print_time_labels(line[2])
             print 'Due: ' + line[3]
@@ -756,7 +760,9 @@ def begin():
         except: project = raw_input('project: ')
 
         # Same with time
-        try: what_time = str(sys.argv[3])
+        try: 
+            what_time = str(sys.argv[3])
+            if what_time == 'now': time_adjust = datetime.now() 
         except: 
             what_time = raw_input('begin: now. ')
 
@@ -1132,8 +1138,12 @@ def status():
     f = open(output_file_name, 'r')
     from datetime import datetime
     lineList = f.readlines()
-    print 
-    print "==============================  Status  =============================="
+    try: 
+        if sys.argv[2]:
+            print
+    except:
+        print 
+        print "==============================  Status  =============================="
     line = lineList[-1].split(', ')
 
     # If there is no job currently going on
@@ -1155,35 +1165,49 @@ def status():
         time_since = str(time_since)
         time_since = time_since.split(', ')
 
-        # If the last job was actually yesterday
-        if len(time_since) == 2:
-            if time_since[0] == '-1 day':
-                time_since = time_since[1]
-                print '\t\tYou\'ve crossed the dateline, Moby.'
+        # This if for output to the Alfred 2 Workflow
+        try: 
+            if sys.argv[2]:
+                if sys.argv[2] == '-a':
+                    if len(time_since) == 1:
+                        time_since = time_since[0]
+                        time_labels = print_time_labels(time_since)
+                    print '<?xml version="1.0"?> \
+                    <items><item uid="status"> \
+                    <title>Currently unplugged.</title> \
+                    <subtitle>You have not been working for ' + \
+                    time_labels + '.</subtitle> \
+                    <icon>icon.png</icon></item></items>'
+        except: 
+            # If the last job was actually yesterday
+            if len(time_since) == 2:
+                if time_since[0] == '-1 day':
+                    time_since = time_since[1]
+                    print '\t\tYou\'ve crossed the dateline, Moby.'
+                    print
+
+            # Otherwise
+            if len(time_since) == 1:
+                time_since = time_since[0]
+            time_labels = print_time_labels(time_since)
+
+            # time_since is actually a clever little hack where -1 day is the
+            # string. It may not work if things are improved. 
+            # In fact, I don't even think this is working now. 
+            if len(time_since) >= 10:
+                print "\tGood morning. You haven't started working yet today."
                 print
+                question = raw_input('\tWould you like to see what you did yesterday? yn ')
+                if question == "y":
+                    yesterday()
+                if question == "n":
+                    print
 
-        # Otherwise
-        if len(time_since) == 1:
-            time_since = time_since[0]
-        time_labels = print_time_labels(time_since)
-
-        # time_since is actually a clever little hack where -1 day is the
-        # string. It may not work if things are improved. 
-        # In fact, I don't even think this is working now. 
-        if len(time_since) >= 10:
-            print "\tGood morning. You haven't started working yet today."
-            print
-            question = raw_input('\tWould you like to see what you did yesterday? yn ')
-            if question == "y":
-                yesterday()
-            if question == "n":
+            # Tell me how long I haven't been working
+            if len(time_since) < 10:
+                print "\tYou have not been working for %s." % time_labels
                 print
-
-        # Tell me how long I haven't been working
-        if len(time_since) < 10:
-            print "\tYou have not been working for %s." % time_labels
-            print
-        print "\tYour last job, %s, lasted %s. Comment: \n\t%s" % (on[4], print_time_labels(on[3]), on[5])
+            print "\tYour last job, %s, lasted %s. Comment: \n\t%s" % (on[4], print_time_labels(on[3]), on[5])
 
     # If there is a job currently under way
     if len(line) == 3:
@@ -1219,10 +1243,22 @@ def status():
             FMT = '%H:%M:%S'
             tdelta = datetime.strptime(off[11:19], FMT) - datetime.strptime(on[11:19], FMT)
             #print '\tYou are currently working on Wyrd In.' # % last_job
-            print '\tYou are currently working on project \'%s\' in Pandora.' % last_job
-            print '\tTime logged: %s.' % print_time_labels(str(tdelta))
-    print "======================================================================"
-    print ""
+            try:
+                if sys.argv[2] == '-a':
+                    print '<?xml version="1.0"?> \
+                    <items><item uid="status"> \
+                    <title>Current project: ' + last_job + '</title> \
+                    <subtitle>Time logged: ' + print_time_labels(str(tdelta)) + \
+                    '.</subtitle><icon>icon.png</icon></item></items>'
+            except: 
+                print '\tYou are currently working on project \'%s\' in Pandora.' % last_job
+                print '\tTime logged: %s.' % print_time_labels(str(tdelta))
+    try: 
+        if sys.argv[2]:
+            print
+    except:
+        print "======================================================================"
+        print ""
     f.close()
 
 # Let's put a project on pause fast. Kind of meaningless, really.
@@ -1263,24 +1299,47 @@ def search():
     total_time = "00:00:00"
     days = 0
     day_string = 'days'
+    PID_search = False
     print
     print "---------------------------------Search---------------------------------"
     for line in lineList:
         if line[0] == '#': continue
         line = line.split(', ')
-        if sys.argv[2] == line[1]:
-                FMT = '%H:%M:%S'
-                tt = datetime.strptime(line[3], FMT)
-                total_time = datetime.strptime(str(total_time), FMT) + timedelta(hours=tt.hour,minutes=tt.minute,seconds=tt.second)
-                if str(total_time)[9] == '2':
-                    days += 1
-                total_time = str(total_time)[11:]
-                try:
-                    if (sys.argv[3] == "print"):
-                        line[5] = line[5].replace("\n", "")
-                        print line[0][5:11] + "for " + print_time_labels(line[3]) + ": " + line[5]
-                except: pass
-        if sys.argv[2] != line[1]:
+        check = line[1]
+        try: 
+            if sys.argv[4] == 'PID':
+                if line[-1].strip('\n').isdigit(): 
+                    check_PID = line[-1].strip()
+                    PID_search = True
+        except: pass
+        if sys.argv[2] == check:
+            if PID_search == True:
+                if check_PID == sys.argv[5]: 
+                    FMT = '%H:%M:%S'
+                    tt = datetime.strptime(line[3], FMT)
+                    total_time = datetime.strptime(str(total_time), FMT) + timedelta(hours=tt.hour,minutes=tt.minute,seconds=tt.second)
+                    if str(total_time)[9] == '2':
+                        days += 1
+                    total_time = str(total_time)[11:]
+                    try:
+                        if (sys.argv[3] == "print"):
+                            line[5] = line[5].replace("\n", "")
+                            print line[0][5:11] + "for " + print_time_labels(line[3]) + ": " + line[5]
+                    except: pass
+            else:
+                if PID_search == False:
+                    FMT = '%H:%M:%S'
+                    tt = datetime.strptime(line[3], FMT)
+                    total_time = datetime.strptime(str(total_time), FMT) + timedelta(hours=tt.hour,minutes=tt.minute,seconds=tt.second)
+                    if str(total_time)[9] == '2':
+                        days += 1
+                    total_time = str(total_time)[11:]
+                    try:
+                        if (sys.argv[3] == "print"):
+                            line[5] = line[5].replace("\n", "")
+                            print line[0][5:11] + "for " + print_time_labels(line[3]) + ": " + line[5]
+                    except: pass
+        if sys.argv[2] != check:
             try:
                 if (sys.argv[3] == "all"):
                     pattern = re.compile(str(sys.argv[2]), re.IGNORECASE)
@@ -1334,7 +1393,9 @@ def today():
     f = open(output_file_name, 'r')
     lineList = f.readlines()
     time_now = datetime.now()
-    print
+    catch = False
+    if sys.argv[2] == '-a': catch = True
+    if catch is False: print
     total_time = "00:00:00"
     total_time_alt = "00:00:00"
     logged_time = "00:00:00"
@@ -1365,8 +1426,13 @@ def today():
                 worked = line[3]
                 read_out = line[5]
             time_labels = print_time_labels(worked)
-            read_out_block = "%s for %s: %s" % (line[1], time_labels, \
+            if catch: 
+                read_out_block = "<item uid=\"today\"><title>{0} ({1}).</title>\
+                <subtitle>Comment: {2}.</subtitle><icon>icon.png</icon></item>".format(line[1], time_labels, \
                     read_out)
+            if not catch: 
+                read_out_block = "%s for %s: %s" % (line[1], time_labels, \
+                        read_out)
             done_jobs.append(read_out_block)
             FMT = '%H:%M:%S'
             lt = datetime.strptime(worked, FMT)
@@ -1381,13 +1447,15 @@ def today():
                     total_time = str(total_time)[11:]
             try:
                 if sys.argv[2][0] == "-":
-                    if (line[1] != sys.argv[2]):
-                        FMT = '%H:%M:%S'
-                        tdelta = datetime.strptime(total_time, FMT) - \
-                                datetime.strptime(line[3], FMT)
-                        total_time_alt = str(tdelta)
-                    specific_job = sys.argv[2][1:]
-                    specific_job_catch = "except"
+                    if sys.argv[2] == '-a': continue
+                    else:   
+                        if (line[1] != sys.argv[2]):
+                            FMT = '%H:%M:%S'
+                            tdelta = datetime.strptime(total_time, FMT) - \
+                                    datetime.strptime(line[3], FMT)
+                            total_time_alt = str(tdelta)
+                        specific_job = sys.argv[2][1:]
+                        specific_job_catch = "except"
             except: continue #print 'problem with - statement' 
 
             try:
@@ -1406,12 +1474,23 @@ def today():
     productivity_measure =(float(total_time[:2])*60+ \
             float(total_time[3:5]))/exp_wpd*100
 
-
-    print "You have worked a total of %s today." % print_time_labels(total_time)
-    if total_time != logged_time:
-        print "(But you've logged %s.)" % print_time_labels(logged_time)
-    print "So far, you have been %.2f%% productive." % productivity_measure
-
+    try: 
+        if sys.argv[2] == '-a':
+            shim = print_time_labels(total_time)
+            if shim == 'a while': shim = 'None.'
+            printed = "<?xml version=\"1.0\"?>\
+            <items><item uid=\"today\"><title>Work today: {0} ({1:.0f}%).</title>\
+            <subtitle>Total: {2}.</subtitle><icon>icon.png</icon></item>\
+            ".format(shim, productivity_measure, print_time_labels(logged_time))
+            print printed
+            if len(done_jobs) == 0: print '</items'
+            catch = True
+    except:    
+        print "You have worked a total of %s today." % print_time_labels(total_time)
+        if total_time != logged_time:
+            print "(But you've logged %s.)" % print_time_labels(logged_time)
+        print "So far, you have been %.2f%% productive." % productivity_measure
+        catch = False
     try: 
         if (sys.argv[2] == "left"):
             time_left = exp_wpd-(float(total_time[:2])*60+float(total_time[3:5]))
@@ -1436,27 +1515,34 @@ def today():
         print str(e)
         pass
 
-    if len(done_jobs) != 0:
-        print ''
-        print 'Today, you have done: '
+    if catch == False:
+        if len(done_jobs) != 0:
+            print ''
+            print 'Today, you have done: '
 
-    # Tried to make a way to make the show more cleaning by collapsing similar
-    # tasks.
-    #for job in range(len(done_jobs)):
-    #    if done_jobs[job].split()[0] == done_jobs[job+1].split()[0]:
-    #        time_one = done_jobs[job].split(':')[0].split('for ')[1]
-    #        time_two = done_jobs[job+1].split(':')[0].split('for ')[1]
-    #        print time_two
-    #        new_time = minutes_index(time_one) + minutes_index(time_two)
-    #        print new_time
+        # Tried to make a way to make the show more cleaning by collapsing similar
+        # tasks.
+        #for job in range(len(done_jobs)):
+        #    if done_jobs[job].split()[0] == done_jobs[job+1].split()[0]:
+        #        time_one = done_jobs[job].split(':')[0].split('for ')[1]
+        #        time_two = done_jobs[job+1].split(':')[0].split('for ')[1]
+        #        print time_two
+        #        new_time = minutes_index(time_one) + minutes_index(time_two)
+        #        print new_time
 
-    if len(done_jobs) > 15:
-        print '. . .'
-    for job in done_jobs[-15:]:
-        dedented_text = textwrap.dedent(job).strip()
-        print textwrap.fill(dedented_text, initial_indent='',
-        subsequent_indent='')
-    print
+        if len(done_jobs) > 15:
+            print '. . .'
+        for job in done_jobs[-15:]:
+            dedented_text = textwrap.dedent(job).strip()
+            print textwrap.fill(dedented_text, initial_indent='',
+            subsequent_indent='')
+        print
+    if catch: 
+        if len(done_jobs) != 0:
+            for job in done_jobs[-8:]:
+                print job
+            print '</items>'
+
 
 # This basically shows what you need to do today. 
 def tasks():
@@ -1551,85 +1637,163 @@ def tasks():
         if line[3] == 'x':
             to_do_today_as_well.append(line)
 
-    # Prints the projects you need to do today.
-    projects = []
-    for item in to_do_today:
-        if item[0] not in projects:
-            projects.append(item[0])
-    print
-    print 'Jobs today: %s' % ', '.join(map(str, projects))
+    if sys.argv[2] != '-a':
 
-    print
-    print "You need to:"
+        # Prints the projects you need to do today.
+        projects = []
+        for item in to_do_today:
+            if item[0] not in projects:
+                projects.append(item[0])
+        print
+        print 'Jobs today: %s' % ', '.join(map(str, projects))
 
-    for x in range(len(to_do_today)):
-        line = to_do_today[x]
-        if line[6][0] == 'd':
-            for original_line in lineList: 
-                original_line = original_line.split(', ')
-                if original_line[7] == line[7]:
-                    date = original_line[3][5:]
-                    if date[0] == '0': date = date[1:]
-                    line[1] = line[1] + ' (' + date + ')'
+        print
+        print "You need to:"
 
-    for x in range(len(to_do_today_as_well)):
-        line = to_do_today_as_well[x]
-        date = line[3][5:]
-        if line[6][0] == 'd':
-            if date[0] == '0': date = date[1:]
-            line[1] = line[1] + ' (' + date + ')'
+        for x in range(len(to_do_today)):
+            line = to_do_today[x]
+            if line[6][0] == 'd':
+                for original_line in lineList: 
+                    original_line = original_line.split(', ')
+                    if original_line[7] == line[7]:
+                        date = original_line[3][5:]
+                        if date[0] == '0': date = date[1:]
+                        line[1] = line[1] + ' (' + date + ')'
 
-    # Sorts accoding to weight, and then alphabetically
-    from operator import itemgetter
-    to_do_today = sorted(to_do_today, key=itemgetter(2), reverse=True)
-    to_do_today = sorted(to_do_today, key=itemgetter(4), reverse=True)
+        for x in range(len(to_do_today_as_well)):
+            line = to_do_today_as_well[x]
+            date = line[3][5:]
+            if line[6][0] == 'd':
+                if date[0] == '0': date = date[1:]
+                line[1] = line[1] + ' (' + date + ')'
 
-    to_do_today_as_well = sorted(to_do_today_as_well, key=itemgetter(2),
-            reverse=True)
-    to_do_today_as_well = sorted(to_do_today_as_well, key=itemgetter(4), reverse=True)
+        # Sorts accoding to weight, and then alphabetically
+        from operator import itemgetter
+        to_do_today = sorted(to_do_today, key=itemgetter(2), reverse=True)
+        to_do_today = sorted(to_do_today, key=itemgetter(4), reverse=True)
+
+        to_do_today_as_well = sorted(to_do_today_as_well, key=itemgetter(2),
+                reverse=True)
+        to_do_today_as_well = sorted(to_do_today_as_well, key=itemgetter(4), reverse=True)
 
 
-    # This checks to see if there is only one task going on which can be
-    # subtracted from if you're trying to get a live amount left. 
-    count = 0
-    if len(log) <= 3:
-        for check in to_do_today:
-            if log[1] == check[0].strip(): count += 1
-    try:
-        if isinstance(int(sys.argv[3]), int): 
-            visible = int(sys.argv[3])
-            to_do_today = to_do_today[:visible]
-    except:
-        visible = 'all'
+        # This checks to see if there is only one task going on which can be
+        # subtracted from if you're trying to get a live amount left. 
+        count = 0
+        if len(log) <= 3:
+            for check in to_do_today:
+                if log[1] == check[0].strip(): count += 1
+        try:
+            if isinstance(int(sys.argv[3]), int): 
+                visible = int(sys.argv[3])
+                to_do_today = to_do_today[:visible]
+        except:
+            visible = 'all'
 
-    # Prints out what you have to do today (or yesterday...)
-    for line in to_do_today:
-        # If there is only one task that can be subtracted from, subtract the
-        # running tally from it. This more accurately shows the time left in
-        # the list itself. 
-        if count == 1:
-            if log[1] == line[0].strip():
-                on = log[0]
-                off = str(datetime.now())
-                if on[:10] == off[:10]:
-                    FMT = '%H:%M:%S'
-                    tdelta = datetime.strptime(off[11:19], FMT) - \
-                    datetime.strptime(on[11:19], FMT)
-                    worked = str(tdelta)
-                    line[2] = minutes_index(line[2]) - minutes_index(worked)
-                    if line[2] <= 0: line[2] = 0
-                    line[2] = minutes_index(line[2])
+        # Prints out what you have to do today (or yesterday...)
+        for line in to_do_today:
+            # If there is only one task that can be subtracted from, subtract the
+            # running tally from it. This more accurately shows the time left in
+            # the list itself. 
+            if count == 1:
+                if log[1] == line[0].strip():
+                    on = log[0]
+                    off = str(datetime.now())
+                    if on[:10] == off[:10]:
+                        FMT = '%H:%M:%S'
+                        tdelta = datetime.strptime(off[11:19], FMT) - \
+                        datetime.strptime(on[11:19], FMT)
+                        worked = str(tdelta)
+                        line[2] = minutes_index(line[2]) - minutes_index(worked)
+                        if line[2] <= 0: line[2] = 0
+                        line[2] = minutes_index(line[2])
 
-        # Compiling the time left today
-        time_left_today = time_add(line[2], time_left_today)
+            # Compiling the time left today
+            time_left_today = time_add(line[2], time_left_today)
 
-        # Formatting it for output
-        if len(line[0]) <= 7: line[0] = line[0] + '\t'
-        if print_time_labels(line[2]) != "a while":
-            print "%s\t%s - %s." % (line[0], line[1], \
-                    print_time_labels(line[2]))
-        if print_time_labels(line[2]) == "a while":
-            print "%s\t%s." % (line[0], line[1])
+            # Formatting it for output
+            if len(line[0]) <= 7: line[0] = line[0] + '\t'
+            if print_time_labels(line[2]) != "a while":
+                print "%s\t%s - %s." % (line[0], line[1], \
+                        print_time_labels(line[2]))
+            if print_time_labels(line[2]) == "a while":
+                print "%s\t%s." % (line[0], line[1])
+
+    if sys.argv[2] == '-a':
+
+        print '<?xml version="1.0"?><items>'
+
+        for x in range(len(to_do_today)):
+            line = to_do_today[x]
+            if line[6][0] == 'd':
+                for original_line in lineList: 
+                    original_line = original_line.split(', ')
+                    if original_line[7] == line[7]:
+                        date = original_line[3][5:]
+                        if date[0] == '0': date = date[1:]
+                        line[1] = line[1] + ' (' + date + ')'
+
+        for x in range(len(to_do_today_as_well)):
+            line = to_do_today_as_well[x]
+            date = line[3][5:]
+            if line[6][0] == 'd':
+                if date[0] == '0': date = date[1:]
+                line[1] = line[1] + ' (' + date + ')'
+
+        # Sorts accoding to weight, and then alphabetically
+        from operator import itemgetter
+        to_do_today = sorted(to_do_today, key=itemgetter(2), reverse=True)
+        to_do_today = sorted(to_do_today, key=itemgetter(4), reverse=True)
+
+        to_do_today_as_well = sorted(to_do_today_as_well, key=itemgetter(2),
+                reverse=True)
+        to_do_today_as_well = sorted(to_do_today_as_well, key=itemgetter(4), reverse=True)
+
+
+        # This checks to see if there is only one task going on which can be
+        # subtracted from if you're trying to get a live amount left. 
+        count = 0
+        if len(log) <= 3:
+            for check in to_do_today:
+                if log[1] == check[0].strip(): count += 1
+        try:
+            if isinstance(int(sys.argv[3]), int): 
+                visible = int(sys.argv[3])
+                to_do_today = to_do_today[:visible]
+        except:
+            visible = 'all'
+
+        # Prints out what you have to do today (or yesterday...)
+        for line in to_do_today:
+            # If there is only one task that can be subtracted from, subtract the
+            # running tally from it. This more accurately shows the time left in
+            # the list itself. 
+            if count == 1:
+                if log[1] == line[0].strip():
+                    on = log[0]
+                    off = str(datetime.now())
+                    if on[:10] == off[:10]:
+                        FMT = '%H:%M:%S'
+                        tdelta = datetime.strptime(off[11:19], FMT) - \
+                        datetime.strptime(on[11:19], FMT)
+                        worked = str(tdelta)
+                        line[2] = minutes_index(line[2]) - minutes_index(worked)
+                        if line[2] <= 0: line[2] = 0
+                        line[2] = minutes_index(line[2])
+
+            # Compiling the time left today
+            time_left_today = time_add(line[2], time_left_today)
+
+
+            # Formatting it for output
+            if len(line[0]) <= 7: line[0] = line[0] + '\t'
+            if print_time_labels(line[2]) != "a while":
+                print '<item uid="' + line[-1].strip() + '" type="file"><title>'+ line[0] + '\t' + line[1] + '</title> \
+                    <subtitle>' + print_time_labels(line[2]) + '.</subtitle><icon>icon.png</icon></item>'
+            if print_time_labels(line[2]) == "a while":
+                print '<item uid="' + line[-1].strip() + '" type="file"><title>'+ line[0] + '\t' + line[1] + '</title> \
+                    <icon>icon.png</icon></item>'
+        print '</items>'
 
     # Prints out the rest if you want to see them. 
     try:
@@ -1681,25 +1845,26 @@ def tasks():
     # on.
 
     # This will run over and then have to be cut back if you go over. 
-    if len(log) <= 3:
-        if log[1] in projects:
-            from datetime import datetime
-            on = log[0]
-            off = str(datetime.now())
-            if on[:10] == off[:10]:
-                FMT = '%H:%M:%S'
-                tdelta = datetime.strptime(off[11:19], FMT) - datetime.strptime(on[11:19], FMT)
-                #on = log.replace(", ", ". Your current Operation: ").replace(",", ".")
-                worked = str(tdelta)
-                time_left_today = minutes_index(time_left_today) - minutes_index(worked)
-                time_left_today = minutes_index(time_left_today)
+    if sys.argv[2] != '-a':
+        if len(log) <= 3:
+            if log[1] in projects:
+                from datetime import datetime
+                on = log[0]
+                off = str(datetime.now())
+                if on[:10] == off[:10]:
+                    FMT = '%H:%M:%S'
+                    tdelta = datetime.strptime(off[11:19], FMT) - datetime.strptime(on[11:19], FMT)
+                    #on = log.replace(", ", ". Your current Operation: ").replace(",", ".")
+                    worked = str(tdelta)
+                    time_left_today = minutes_index(time_left_today) - minutes_index(worked)
+                    time_left_today = minutes_index(time_left_today)
 
-    print
-    # Prints the total time left given the tasks to do.
-    print "You have around %s of work to do." % print_time_labels(time_left_today)
-    if time_also_left_today != "00:00:00":
-        print "You also have an extra %s of work after that." % \
-                print_time_labels(time_also_left_today)
+        print
+        # Prints the total time left given the tasks to do.
+        print "You have around %s of work to do." % print_time_labels(time_left_today)
+        if time_also_left_today != "00:00:00":
+            print "You also have an extra %s of work after that." % \
+                    print_time_labels(time_also_left_today)
 
 def yesterday():
     global exp_wpd
@@ -2293,7 +2458,9 @@ def view_list():
     life = []
     uni = []
     gifts = []
+    work = []
     other = []
+    boomerang = []
 
     for line in lineList:
         if line[0] == '#': continue
@@ -2311,37 +2478,68 @@ def view_list():
                 uni.append(line)
             if line[2] == 'gifts':
                 gifts.append(line)
+            if line[2] == 'work':
+                work.append(line)
             if line[2] == 'other':
                 other.append(line)
+            if line[2] == 'boomerang':
+                boomerang.append(line)
+
     if urgent:
-        print 'URGENT: '
+        cost = 0
+        for item in urgent: cost += int(item[1]) 
+        print 'URGENT: %d€ total' % cost
         for item in urgent:
-            print '%s (%s,00 €) [%s]' % (item[0], item[1], item[2])
+            print '%s (%s€) [%s]' % (item[0], item[1], item[2])
         print
     if food:
-        print 'Food:'
+        cost = 0
+        for item in food: cost += int(item[1]) 
+        print 'Food: %d€ total' % cost
         for item in food:
-            print '%s (%s,00 €)' % (item[0], item[1])
+            print '%s (%s€)' % (item[0], item[1])
         print
     if life:
-        print 'Life:'
+        cost = 0
+        for item in life: cost += int(item[1]) 
+        print 'Life: %d€ total' % cost
         for item in life:
-            print '%s (%s,00 €)' % (item[0], item[1])
+            print '%s (%s€)' % (item[0], item[1])
         print
     if gifts:
-        print 'Gifts:'
+        cost = 0
+        for item in gifts: cost += int(item[1]) 
+        print 'Gifts: %d€ total' % cost
         for item in gifts:
-            print '%s (%s,00 €)' % (item[0], item[1])
+            print '%s (%s€)' % (item[0], item[1])
         print
     if uni:
-        print 'Uni:'
+        cost = 0
+        for item in uni: cost += int(item[1]) 
+        print 'Uni: %d€ total' % cost
         for item in uni:
-            print '%s (%s,00 €)' % (item[0], item[1])
+            print '%s (%s€)' % (item[0], item[1])
+        print
+    if work: 
+        cost = 0
+        for item in work: cost += int(item[1]) 
+        print 'Work: %d€ total' % cost
+        for item in work:
+            print '%s (%s€)' % (item[0], item[1])
         print
     if other:
-        print 'Other:'
+        cost = 0
+        for item in other: cost += int(item[1]) 
+        print 'Other: %d€ total' % cost
         for item in other:
-            print '%s (%s,00 €)' % (item[0], item[1])
+            print '%s (%s€)' % (item[0], item[1])
+        print
+    if boomerang:
+        cost = 0
+        for item in boomerang: cost += int(item[1])
+        print 'Boomerang: -%d€ total' % cost
+        for item in boomerang:
+            print '%s (-%s€)' % (item[0], item[1])
         print
 
 
@@ -2353,7 +2551,7 @@ def buy():
     print 'Add to list:'
     item = raw_input('Item: ')
     price = raw_input('Price (€): ')
-    print 'Reasons: food, life, gifts, uni, other'
+    print 'Reasons: food, life, gifts, uni, work, other, boomerang'
     reason = raw_input('Reason: ')
     urgent = raw_input('Urgent [y/n]: ')
     buyd.extend([item, price, reason, urgent, '\n'])
@@ -2521,9 +2719,9 @@ if __name__ == '__main__':
             # on tasks.csv
 if __name__ == "__main__":
     #void()
-    #if (sys.argv[1] == "test"): minutes_index(sys.argv[2])
+    #if (sys.argv[1] == "test"): 
     try:
-        possible_arguments = ['mvim', 'vi', 'test', 'today', 
+        possible_arguments = ['mvim', 'vi', 'sublime', 'test', 'today', 
         'search', 'cease', 'status', 'end', 'begin', 'being', 'start', 'help',
         'yesterday', 'topics', 'week', 'fence', 'tasks', 'projects', 'random',
         'write', 'task', 'PID', 'list', 'buy', 'to', 's', 'e', 'b',
@@ -2537,6 +2735,7 @@ if __name__ == "__main__":
         # Editing
         if (sys.argv[1] == "mvim"): edit(sys.argv[2])
         if (sys.argv[1] == "vi"): edit(sys.argv[2])
+        if (sys.argv[1] == "sublime"): edit(sys.argv[2])
 
         # Logs
         if (sys.argv[1] == "today") or (sys.argv[1] == "n"): today()
